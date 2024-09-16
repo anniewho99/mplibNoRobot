@@ -54,7 +54,7 @@ let sessionConfig = {
     allowReplacements: true, // Allow replacing any players who leave an ongoing session?
     exitDelayWaitingRoom: 0, // Number of countdown seconds before leaving waiting room (if zero, player leaves waiting room immediately)
     maxHoursSession: 0, // Maximum hours where additional players are still allowed to be added to session (if zero, there is no time limit)
-    recordData: false // Record all data?  
+    recordData: true // Record all data?  
 };
 const verbosity = 2;
 
