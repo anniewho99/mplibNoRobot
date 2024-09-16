@@ -83,41 +83,6 @@ initializeMPLIB( sessionConfig , studyId , funList, listenerPaths, verbosity );
 // -------------------------------------
 //       Game Globals
 // -------------------------------------
-
-// Add this function in gridworld.js
-function drawInitialGrids() {
-  const initialGrids = [
-      { id: "grid1", start: [3, 3], end: [5, 5] },
-      { id: "grid2", start: [3, 11], end: [5, 13] },
-      { id: "grid3", start: [11, 3], end: [13, 5] },
-      { id: "grid4", start: [11, 11], end: [13, 13] }
-  ];
-
-  initialGrids.forEach(grid => {
-      const [startRow, startCol] = grid.start;
-      const [endRow, endCol] = grid.end;
-
-      for (let row = startRow; row <= endRow; row++) {
-          for (let col = startCol; col <= endCol; col++) {
-              // Create a grid-cell div
-              const cell = document.createElement("div");
-              cell.classList.add("grid-cell");
-
-              // Set position of the cell
-              const left = 40 * (col - 1) + "px";  // 40px per cell width
-              const top = 40 * (row - 1) + "px";   // 40px per cell height
-              cell.style.transform = `translate(${left}, ${top})`;
-
-              // Append the cell to the game container
-              gameContainer.appendChild(cell);
-          }
-      }
-  });
-}
-
-// Call this function when the game starts
-drawInitialGrids();
-
 let offsetY = 1;
 let maxCoins = 10;
 

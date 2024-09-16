@@ -188,35 +188,3 @@ button:active {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-/* Add this to gridworld.css */
-
-.grid-cell {
-  caret-color: transparent;
-  position: absolute;
-  width: 40px; /* Increase size for better visibility */
-  height: 40px;
-  background-color: #e0f7fa; /* Light teal background color */
-  border: 2px solid #4db6ac; /* Darker teal border for better contrast */
-}
-
-.Character {
-  caret-color: transparent;
-  transition: transform 0.4s;
-}
-
-.Character_shadow {
-  caret-color: transparent;
-  background: url(./images/shadow.png) no-repeat no-repeat;
-}
-
-.Character_sprite {
-  caret-color: transparent;
-  overflow: hidden;
-  background: url(./images/characters.png);
-}
-
-/* New hover effect for the grid */
-.grid-cell:hover {
-  background-color: #b2dfdb; /* Slightly darker on hover */
-  cursor: pointer;
-}
