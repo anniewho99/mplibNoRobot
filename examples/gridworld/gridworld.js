@@ -88,14 +88,14 @@ let maxCoins = 10;
 
 let mapData = {
   minX: 1,
-  maxX: 15,
+  maxX: 19,
   minY: 1,
-  maxY: 15,
+  maxY: 19,
   blockedSpaces: {  },
 };
 
 // Options for Player Colors... these are in the same order as our sprite sheet
-const playerColors = ["blue", "red", "orange", "yellow", "green", "purple"];
+const playerColors = ["blue", "orange", "yellow", "purple"];
 
 let playerId;
 let playerRef;
@@ -203,79 +203,194 @@ function isOccupied(x,y) {
   )
 }
 
-function getRandomSafeSpot() {
-  let isOccupiedNow = true;
-  let x,y;
-  while (isOccupiedNow) {
-      x = Math.floor(Math.random() * mapData.maxX);
-      y = Math.floor(Math.random() * mapData.maxY);
-      isOccupiedNow = isOccupied(x,y);
-  }
-  return { x , y };
-}
+function placeTokensForPlayer(playerId) {
+  let player = players[playerId];
+  if (!player) return;
 
-function placeCoin() {
+  let subgridPositions = [
+    { xStart: 3, xEnd: 5, yStart: 3, yEnd: 5 },
+    { xStart: 9, xEnd: 11, yStart: 3, yEnd: 5 },
+    { xStart: 15, xEnd: 17, yStart: 3, yEnd: 5 },
+    { xStart: 3, xEnd: 5, yStart: 9, yEnd: 11 },
+    { xStart: 15, xEnd: 17, yStart: 9, yEnd: 11 },
+    { xStart: 3, xEnd: 5, yStart: 15, yEnd: 17 },
+    { xStart: 9, xEnd: 11, yStart: 15, yEnd: 17 },
+    { xStart: 15, xEnd: 17, yStart: 15, yEnd: 17 },
+  ];
 
-  let numCoins = Object.keys(coins).length;
-  if ( hasControl() && ( numCoins < maxCoins) && !hasEnded) {
-      // This player can place coins
-      const { x, y } = getRandomSafeSpot();
+  // Randomly select a subgrid
+  let subgrid = randomFromArray(subgridPositions);
+  let placedPositions = new Set(); // Track placed positions to avoid overlaps
 
-      // Send this new coin position to the database
+  // Place three coins within the selected subgrid
+  for (let i = 0; i < 3; ) {
+    let x = Math.floor(Math.random() * (subgrid.xEnd - subgrid.xStart + 1)) + subgrid.xStart;
+    let y = Math.floor(Math.random() * (subgrid.yEnd - subgrid.yStart + 1)) + subgrid.yStart;
+    let positionKey = `${x},${y}`;
+
+    // Ensure the position is not occupied and not already used
+    if (!isOccupied(x, y) && !placedPositions.has(positionKey)) {
       let id = `coins/${getKeyString(x, y)}`;
-      let newState = {
-            x,y
-          };
-      updateStateDirect(id, newState);
+      let newState = { x, y, color: player.color, id: playerId }; // Set the coin color to match the player
+      
+      updateStateDirect(id, newState); // Save the new state in Firebase
+
+      placedPositions.add(positionKey); // Mark this position as used
+      i++; // Only increment after a successful placement
+    }
   }
-  
-  const coinTimeouts = [2000, 3000, 4000, 5000];
-      setTimeout(() => {
-         placeCoin();
-      }, randomFromArray(coinTimeouts));
 }
 
 
-function handleArrowPress(xChange=0, yChange=0) {
+// // Handle token collection and place new groups when needed
+// function handleCoinCollection(playerId) {
+//   let player = players[playerId];
+//   if (player.coins % 3 === 0) { // Check if the player collected a group of three
+//     placeTokensForPlayer(playerId); // Place a new group of tokens
+//   }
+// }
+
+async function handleCoinCollection(playerId) {
+  let player = players[playerId];
+  if (!player) return;
+
+  // Fetch the current state of all coins from Firebase
+  let currentCoins = await readState('coins');
+
+  // Filter coins associated with the player by their color
+  let playerCoins = Object.keys(currentCoins || {}).filter(
+    (key) => currentCoins[key] && currentCoins[key].id === playerId
+  );
+
+  // Check if all coins for this player are removed
+  if (playerCoins.length === 0) {
+    // Log that all coins are collected
+    console.log(`All coins collected for player ${playerId}. Placing a new group.`);
+
+    // Place a new group of three coins
+    await placeTokensForPlayer(playerId);
+  }
+}
+
+async function getCoinData(key) {
+  // Fetch the coin data from the correct path
+  let coinData = await readState(`coins/${key}`);
+
+  // Log the retrieved data to ensure it's correct
+  console.log(`Retrieved Coin Data for ${key}:`, coinData);
+
+  // Return the coin data, ensuring it's an object
+  return coinData || {};
+}
+
+
+function handleArrowPress(xChange = 0, yChange = 0) {
   const oldX = players[playerId].x;
   const oldY = players[playerId].y;
   const newX = oldX + xChange;
   const newY = oldY + yChange;
   let newDirection = players[playerId].direction;
-  if ((newX >=1) && (newX <= mapData.maxX) && (newY >=1) && (newY <= mapData.maxY) && !isOccupied(newX, newY)) {
-    //move to the next space
-    if (xChange === 1) {
-      newDirection = "right";
-    }
-    if (xChange === -1) {
-      newDirection = "left";
-    }
 
-    // Update coin count
-    let newCoinCount = players[playerId].coins;
+  if (
+    newX >= 1 &&
+    newX <= mapData.maxX &&
+    newY >= 1 &&
+    newY <= mapData.maxY &&
+    !isOccupied(newX, newY)
+  ) {
+    // Move to the next space
+    if (xChange === 1) newDirection = "right";
+    if (xChange === -1) newDirection = "left";
+
+    // Generate the key to access the coin object
     const key = getKeyString(newX, newY);
-    if (coins[key]) {
-        newCoinCount = newCoinCount + 1;
-        // Remove this coin
-        let path = `coins/${key}`;
-        let newState = null;
-        updateStateDirect(path, newState);
-    }
+
+    // Retrieve the coin data
+    getCoinData(key).then((coin) => {
+      // Log the coin object to verify its structure
+      console.log(`Coin Object:`, coin);
+
+      // Check if the coin object has a color property
+      if (coin && coin.color) {
+        // Log the colors for debugging
+        console.log(`Coin Color: ${coin.color}, Player Color: ${players[playerId].color}`);
+
+        // Check if the coin's color matches the player's color
+        if (coin.color.trim() === players[playerId].color.trim()) {
+          // Update the player's coin count only if colors match
+          players[playerId].coins = players[playerId].coins + 1;
+
+          // Correct path to remove the coin from the state
+          let path = `coins/${key}`;
+          let newState = null;
+          updateStateDirect(path, newState);
+
+          // Handle collection logic, possibly placing new coins
+          handleCoinCollection(playerId);
+        } else {
+          // Log the failed attempt to collect a mismatched coin
+          console.log(`Player ${playerId} tried to collect a coin of different color.`);
+        }
+      } else {
+        console.log(`The coin does not have a color property or it is undefined.`);
+      }
+    }).catch((error) => {
+      console.log(`Error retrieving coin data for ${key}:`, error);
+    });
 
     // Broadcast this new player position to the database
     let path = `players/${playerId}`;
     let newState = {
-          direction: newDirection,
-          oldX: oldX,
-          oldY: oldY,
-          x: newX,
-          y: newY,
-          coins: newCoinCount
-        };
+      direction: newDirection,
+      oldX: oldX,
+      oldY: oldY,
+      x: newX,
+      y: newY,
+      coins: players[playerId].coins,
+    };
     updateStateDirect(path, newState);
-
   }
 }
+
+
+async function assignUniqueColor() {
+  // Fetch all current players from the Firebase database
+  let players = await readState('players');
+  let usedColors = new Set();
+
+  // Collect all colors that are currently being used
+  if (players !== null) {
+    Object.values(players).forEach(player => {
+      if (player.color) {
+        usedColors.add(player.color);
+      }
+    });
+  }
+
+  // Find the first available color that isn't used
+  let availableColor = playerColors.find(color => !usedColors.has(color));
+  if (!availableColor) {
+    console.error('No available colors left for players!');
+    return null;
+  }
+
+  return availableColor;
+}
+
+// Helper function to determine the correct filter value based on the color
+function getFilterForColor(color) {
+  switch (color) {
+    case 'blue':
+      return 'sepia(1) saturate(4000%) hue-rotate(150deg) brightness(1) contrast(2)'; // Blue filter
+    case 'orange':
+      return 'sepia(1) saturate(5000%) hue-rotate(293deg) brightness(0.9) contrast(1.6)';  // Orange filter
+    case 'yellow':
+      return 'sepia(1) saturate(4000%) hue-rotate(2deg) brightness(1.2) contrast(1.1)'; // yellow filter
+    case 'purple':
+      return 'sepia(1) saturate(5000%) hue-rotate(182deg) brightness(0.8) contrast(1.1)'; // Purple filter
+  }
+}
+
 
 async function initGame() {
     // Get the id of this player
@@ -294,12 +409,15 @@ async function initGame() {
     do {
         name = createName(); 
     } while (playerNames.includes( name ));
+
+    let color = await assignUniqueColor(); // Get a unique color for the player
+    if (!color) return; // Exit if no color is available
  
     // Show the player name
     let str = `You are: ${name}`;
     messageGame.innerHTML = str;
     
-    const {x, y} = getRandomSafeSpot(); 
+    const {x, y} = { x: 1, y: 1 }; 
     
     // Broadcast this new player position to the database
     let path = `players/${playerId}`;
@@ -307,7 +425,7 @@ async function initGame() {
           id: playerId,
           name,
           direction: "right",
-          color: randomFromArray(playerColors), 
+          color: color, 
           oldX: x,
           oldY: y,
           x,
@@ -317,7 +435,7 @@ async function initGame() {
     updateStateDirect(path, newState);
 
     // Place first coin
-    placeCoin();
+    placeTokensForPlayer(playerId);
 }
 
 // --------------------------------------------------------------------------------------
@@ -415,7 +533,7 @@ function receiveStateChange(pathNow,nodeName, newState, typeChange ) {
       coinElement.classList.add("Coin", "grid-cell");
       coinElement.innerHTML = `
         <div class="Coin_shadow grid-cell"></div>
-        <div class="Coin_sprite grid-cell"></div>
+        <div class="Coin_sprite grid-cell" style="filter: ${getFilterForColor(coin.color)};"></div>
       `;
 
       // Position the Element

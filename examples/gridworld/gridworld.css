@@ -18,9 +18,9 @@
 .game-container {
   /*position: relative;*/
   margin-top: 10;
-  width: 240px;
-  height: 240px;
-  background: url(./images/map.png) no-repeat no-repeat;
+  width: 304px; /* Doubled width to fit four times the original grid */
+  height: 304px; /* Doubled height to fit four times the original grid */
+  background: url('./images/map_cropped.png') repeat;
   transform: scale(3);
   transform-origin: left top; /* Ensure scaling starts from the top-left */
   image-rendering: pixelated;
@@ -188,3 +188,72 @@ button:active {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
+/* Subgrid border styling */
+.subgrid {
+  position: absolute;
+  border: 2px solid grey; /* Adjust color as needed */
+}
+
+/* Top-left (subgrid in top-left corner) */
+.subgrid1 {
+  top: 32px;  /* 16px more down */
+  left: 32px; /* 16px more right */
+  width: 48px;  /* 3 cells * 16px */
+  height: 48px; /* 3 cells * 16px */
+}
+
+/* Top-middle (subgrid in top-center) */
+.subgrid2 {
+  top: 32px;  /* 16px more down */
+  left: 128px; /* Increased spacing by 16px */
+  width: 48px;
+  height: 48px;
+}
+
+/* Top-right (subgrid in top-right corner) */
+.subgrid3 {
+  top: 32px;  /* 16px more down */
+  left: 224px; /* Increased spacing by 16px */
+  width: 48px;
+  height: 48px;
+}
+
+/* Middle-left (subgrid in middle-left) */
+.subgrid4 {
+  top: 128px;  /* 16px more down, increased spacing between rows */
+  left: 32px;  /* Same shift right */
+  width: 48px;
+  height: 48px;
+}
+
+/* Middle-right (subgrid in middle-right) */
+.subgrid5 {
+  top: 128px;  /* 16px more down, increased spacing between rows */
+  left: 224px; /* Same shift right */
+  width: 48px;
+  height: 48px;
+}
+
+/* Bottom-left (subgrid in bottom-left corner) */
+.subgrid6 {
+  top: 224px; /* 16px more down */
+  left: 32px;  /* Same shift right */
+  width: 48px;
+  height: 48px;
+}
+
+/* Bottom-middle (subgrid in bottom-center) */
+.subgrid7 {
+  top: 224px; /* 16px more down */
+  left: 128px;  /* Increased spacing by 16px */
+  width: 48px;
+  height: 48px;
+}
+
+/* Bottom-right (subgrid in bottom-right corner) */
+.subgrid8 {
+  top: 224px; /* 16px more down */
+  left: 224px; /* Same shift right */
+  width: 48px;
+  height: 48px;
+}
