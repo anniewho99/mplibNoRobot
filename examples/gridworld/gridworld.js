@@ -391,8 +391,112 @@ function getFilterForColor(color) {
   }
 }
 
+function shuffle(array) {
+  let currentIndex = array.length, randomIndex;
+
+  // While there remain elements to shuffle
+  while (currentIndex !== 0) {
+    // Pick a remaining element
+    randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex--;
+
+    // Swap it with the current element
+    [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+  }
+
+  return array;
+}
+
+// Function to render a door on the grid as a rectangle
+function renderDoor(x, y, color, side) {
+  const doorElement = document.createElement("div");
+  doorElement.classList.add("Door");
+
+  // Set door background color
+  doorElement.style.backgroundColor = color;
+
+  // Adjust door position with appropriate offsets based on side
+  let left = 16 * (x - 1) + "px"; // Default left position
+  let top = 16 * (y - 1) + "px";  // Default top position
+
+  // Adjust the width/height based on the side
+  if (side === 'top' || side === 'bottom') {
+    doorElement.style.width = '18px';
+    doorElement.style.height = '4px';  // Horizontal door
+
+    // Adjust position for top or bottom alignment
+    left = 16 * (x - 1) - 1 + "px";  // Center it horizontally
+
+    if (side === 'top') {
+      top = 16 * (y -1) - 1 + "px";  // Move slightly up for top door
+    } else if (side === 'bottom') {
+      top = 16 * (y - 1) + 13 + "px";  // Move slightly down for bottom door
+    }
+
+  } else if (side === 'left' || side === 'right') {
+    doorElement.style.width = '4px';
+    doorElement.style.height = '18px'; // Vertical door
+
+    // Adjust position for left or right alignment
+    top = 16 * (y - 1) - 1 + "px";  // Center it vertically
+
+    if (side === 'left') {
+      left = 16 * (x - 1) - 1 + "px";  // Move slightly left for left door
+    } else if (side === 'right') {
+      left = 16 * (x - 1) + 13 + "px";  // Move slightly right for right door
+    }
+  }
+
+  // Apply the calculated positions
+  doorElement.style.transform = `translate3d(${left}, ${top}, 0)`;
+
+  // Append the door to the game container
+  document.querySelector(".game-container").appendChild(doorElement);
+}
+
+// Modified function to place doors around each subgrid
+function placeDoorsForSubgrid(subgridIndex) {
+  let subgridPositions = [
+    { xStart: 3, xEnd: 5, yStart: 3, yEnd: 5 },
+    { xStart: 9, xEnd: 11, yStart: 3, yEnd: 5 },
+    { xStart: 15, xEnd: 17, yStart: 3, yEnd: 5 },
+    { xStart: 3, xEnd: 5, yStart: 9, yEnd: 11 },
+    { xStart: 15, xEnd: 17, yStart: 9, yEnd: 11 },
+    { xStart: 3, xEnd: 5, yStart: 15, yEnd: 17 },
+    { xStart: 9, xEnd: 11, yStart: 15, yEnd: 17 },
+    { xStart: 15, xEnd: 17, yStart: 15, yEnd: 17 },
+  ];
+
+  const subgrid = subgridPositions[subgridIndex];
+
+  const doorPositions = [
+    { x: (subgrid.xStart + subgrid.xEnd) / 2, y: subgrid.yStart, side: 'top' },    // Top Door
+    { x: (subgrid.xStart + subgrid.xEnd) / 2, y: subgrid.yEnd, side: 'bottom' },   // Bottom Door
+    { x: subgrid.xStart, y: (subgrid.yStart + subgrid.yEnd) / 2, side: 'left' },   // Left Door
+    { x: subgrid.xEnd, y: (subgrid.yStart + subgrid.yEnd) / 2, side: 'right' }     // Right Door
+  ];
+
+  let doorColors = ['yellow', 'orange', '#00CCFF', '#9370DB'];
+
+  let shuffledColors = shuffle(doorColors);
+
+  // Loop through each door and place it on the grid with the shuffled color
+  doorPositions.forEach((door, index) => {
+    renderDoor(door.x, door.y, shuffledColors[index], door.side);
+  });
+}
+
+function placeDoorsForAllSubgrids() {
+  for (let i = 0; i < 8; i++) {
+    placeDoorsForSubgrid(i);
+  }
+}
+
+
 
 async function initGame() {
+
+    placeDoorsForAllSubgrids() 
     // Get the id of this player
     playerId = getCurrentPlayerId();
 

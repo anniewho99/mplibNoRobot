@@ -257,3 +257,11 @@ button:active {
   width: 48px;
   height: 48px;
 }
+
+.Door {
+  position: absolute;
+  width: 18px;    /* Slightly larger than the grid cell width */
+  height: 8px;    /* Make it a rectangle */
+  z-index: 2;     /* Ensure the door appears above other elements */
+  border-radius: 2px; /* Optional: Round the edges for a smooth look */
+}
