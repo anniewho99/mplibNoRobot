@@ -203,6 +203,7 @@ function isOccupied(x,y) {
   )
 }
 
+
 async function placeTokensForPlayer(playerId) {
   let player = players[playerId];
   if (!player) return;
@@ -338,8 +339,7 @@ function handleArrowPress(xChange = 0, yChange = 0) {
     newX >= 1 &&
     newX <= mapData.maxX &&
     newY >= 1 &&
-    newY <= mapData.maxY &&
-    !isOccupied(newX, newY)
+    newY <= mapData.maxY
   ) {
     // Move to the next space
     if (xChange === 1) newDirection = "right";
