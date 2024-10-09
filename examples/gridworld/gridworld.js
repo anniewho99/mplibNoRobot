@@ -203,9 +203,12 @@ function isOccupied(x,y) {
   )
 }
 
-function placeTokensForPlayer(playerId) {
+async function placeTokensForPlayer(playerId) {
   let player = players[playerId];
   if (!player) return;
+
+  // Log player data for debugging
+  console.log(`Placing tokens for player ${playerId}. Player data:`, player);
 
   let subgridPositions = [
     { xStart: 3, xEnd: 5, yStart: 3, yEnd: 5 },
@@ -218,28 +221,68 @@ function placeTokensForPlayer(playerId) {
     { xStart: 15, xEnd: 17, yStart: 15, yEnd: 17 },
   ];
 
-  // Randomly select a subgrid
-  let subgrid = randomFromArray(subgridPositions);
+  // Initialize or retrieve the current used subgrid for this player
+  if (!player.currentSubgrid) {
+    player.currentSubgrid = null;
+  }
+
+  // Collect all subgrids currently used by all players
+  let allUsedSubgrids = Object.values(players)
+    .map(p => (p.currentSubgrid != null) ? p.currentSubgrid - 1 : null); 
+  // Log all used subgrids for debugging
+  console.log(`All used subgrids by players:`, allUsedSubgrids);
+
+  // Filter out subgrids used by other players, but include the player's own subgrid
+  let availableSubgrids = subgridPositions.filter((_, index) => 
+    !allUsedSubgrids.includes(index)
+  );
+
+  // Log available subgrids for debugging
+  console.log(`Available subgrids for player ${playerId}:`, availableSubgrids);
+
+  // Select a new subgrid randomly from the available ones
+  let subgridIndex = Math.floor(Math.random() * availableSubgrids.length);
+  let selectedSubgrid = availableSubgrids[subgridIndex];
+
+  // Get the index of the selected subgrid to track it
+  let subgridPositionIndex = subgridPositions.indexOf(selectedSubgrid);
+
+  // Update the player's current subgrid in the database
+  let path = `players/${playerId}`;
+  let newState = {
+    ...player,
+    currentSubgrid: subgridPositionIndex + 1, // Store subgrid index with +1 offset
+  };
+
+  // Log the new subgrid for debugging
+  console.log(`Assigning new subgrid ${subgridPositionIndex} to player ${playerId}`);
+
+  await updateStateDirect(path, newState);
+
   let placedPositions = new Set(); // Track placed positions to avoid overlaps
 
   // Place three coins within the selected subgrid
-  for (let i = 0; i < 3; ) {
-    let x = Math.floor(Math.random() * (subgrid.xEnd - subgrid.xStart + 1)) + subgrid.xStart;
-    let y = Math.floor(Math.random() * (subgrid.yEnd - subgrid.yStart + 1)) + subgrid.yStart;
+  for (let i = 0; i < 3;) {
+    let x = Math.floor(Math.random() * (selectedSubgrid.xEnd - selectedSubgrid.xStart + 1)) + selectedSubgrid.xStart;
+    let y = Math.floor(Math.random() * (selectedSubgrid.yEnd - selectedSubgrid.yStart + 1)) + selectedSubgrid.yStart;
     let positionKey = `${x},${y}`;
 
     // Ensure the position is not occupied and not already used
     if (!isOccupied(x, y) && !placedPositions.has(positionKey)) {
       let id = `coins/${getKeyString(x, y)}`;
       let newState = { x, y, color: player.color, id: playerId }; // Set the coin color to match the player
-      
+
       updateStateDirect(id, newState); // Save the new state in Firebase
 
       placedPositions.add(positionKey); // Mark this position as used
       i++; // Only increment after a successful placement
     }
   }
+
+  // Log token placement for debugging
+  console.log(`Placed tokens for player ${playerId} in subgrid ${subgridPositionIndex}`);
 }
+
 
 
 // // Handle token collection and place new groups when needed
@@ -276,8 +319,8 @@ async function getCoinData(key) {
   // Fetch the coin data from the correct path
   let coinData = await readState(`coins/${key}`);
 
-  // Log the retrieved data to ensure it's correct
-  console.log(`Retrieved Coin Data for ${key}:`, coinData);
+  // // Log the retrieved data to ensure it's correct
+  // console.log(`Retrieved Coin Data for ${key}:`, coinData);
 
   // Return the coin data, ensuring it's an object
   return coinData || {};
@@ -307,13 +350,13 @@ function handleArrowPress(xChange = 0, yChange = 0) {
 
     // Retrieve the coin data
     getCoinData(key).then((coin) => {
-      // Log the coin object to verify its structure
-      console.log(`Coin Object:`, coin);
+      // // Log the coin object to verify its structure
+      // console.log(`Coin Object:`, coin);
 
       // Check if the coin object has a color property
       if (coin && coin.color) {
         // Log the colors for debugging
-        console.log(`Coin Color: ${coin.color}, Player Color: ${players[playerId].color}`);
+        // console.log(`Coin Color: ${coin.color}, Player Color: ${players[playerId].color}`);
 
         // Check if the coin's color matches the player's color
         if (coin.color.trim() === players[playerId].color.trim()) {
@@ -329,13 +372,13 @@ function handleArrowPress(xChange = 0, yChange = 0) {
           handleCoinCollection(playerId);
         } else {
           // Log the failed attempt to collect a mismatched coin
-          console.log(`Player ${playerId} tried to collect a coin of different color.`);
+          // console.log(`Player ${playerId} tried to collect a coin of different color.`);
         }
       } else {
-        console.log(`The coin does not have a color property or it is undefined.`);
+        // console.log(`The coin does not have a color property or it is undefined.`);
       }
     }).catch((error) => {
-      console.log(`Error retrieving coin data for ${key}:`, error);
+      // console.log(`Error retrieving coin data for ${key}:`, error);
     });
 
     // Broadcast this new player position to the database
