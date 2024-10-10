@@ -94,6 +94,70 @@ let mapData = {
   blockedSpaces: {  },
 };
 
+let subgridPositions = [
+  { xStart: 3, xEnd: 5, yStart: 3, yEnd: 5 },
+  { xStart: 9, xEnd: 11, yStart: 3, yEnd: 5 },
+  { xStart: 15, xEnd: 17, yStart: 3, yEnd: 5 },
+  { xStart: 3, xEnd: 5, yStart: 9, yEnd: 11 },
+  { xStart: 15, xEnd: 17, yStart: 9, yEnd: 11 },
+  { xStart: 3, xEnd: 5, yStart: 15, yEnd: 17 },
+  { xStart: 9, xEnd: 11, yStart: 15, yEnd: 17 },
+  { xStart: 15, xEnd: 17, yStart: 15, yEnd: 17 },
+];
+
+let door_movements = [];
+let forbidden_moves = [];
+
+// Directions for movement: up, down, left, right
+const DIRECTIONS = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+
+for (let grid of subgridPositions) {  // Use subgridPositions instead of GRIDS
+    let top_middle = [grid['xStart'], grid['yStart'] + 1];
+    let bottom_middle = [grid['xEnd'], grid['yEnd'] - 1];
+    let left_middle = [grid['xStart'] + 1, grid['yStart']];
+    let right_middle = [grid['xEnd'] - 1, grid['yEnd']];
+
+    // Top middle entering and exiting
+    door_movements.push([[top_middle[0] - 1, top_middle[1]], top_middle]);  // Entering
+    door_movements.push([top_middle, [top_middle[0] - 1, top_middle[1]]]);  // Exiting
+
+    // Bottom middle entering and exiting
+    door_movements.push([[bottom_middle[0] + 1, bottom_middle[1]], bottom_middle]);  // Entering
+    door_movements.push([bottom_middle, [bottom_middle[0] + 1, bottom_middle[1]]]);  // Exiting
+
+    // Left middle entering and exiting
+    door_movements.push([[left_middle[0], left_middle[1] - 1], left_middle]);  // Entering
+    door_movements.push([left_middle, [left_middle[0], left_middle[1] - 1]]);  // Exiting
+
+    // Right middle entering and exiting
+    door_movements.push([[right_middle[0], right_middle[1] + 1], right_middle]);  // Entering
+    door_movements.push([right_middle, [right_middle[0], right_middle[1] + 1]]);  // Exiting
+}
+
+// Populate forbidden_moves
+subgridPositions.forEach(grid => {  // Use subgridPositions instead of GRIDS
+    let corners = [
+        [grid.xStart, grid.yStart],
+        [grid.xStart, grid.yEnd],
+        [grid.xEnd, grid.yStart],
+        [grid.xEnd, grid.yEnd]
+    ];
+
+    corners.forEach(corner => {
+        DIRECTIONS.forEach(direction => {
+            let next_pos = [corner[0] + direction[0], corner[1] + direction[1]];
+            if (next_pos[0] < grid.xStart || next_pos[0] > grid.xEnd || 
+                next_pos[1] < grid.yStart || next_pos[1] > grid.yEnd) {
+                forbidden_moves.push([[corner[0], corner[1]], next_pos].toString());
+                forbidden_moves.push([next_pos, [corner[0], corner[1]]].toString());
+            }
+        });
+    });
+});
+
+// Deduplicate forbidden moves
+forbidden_moves = Array.from(new Set(forbidden_moves));
+
 // Options for Player Colors... these are in the same order as our sprite sheet
 const playerColors = ["blue", "orange", "yellow", "purple"];
 
@@ -211,17 +275,6 @@ async function placeTokensForPlayer(playerId) {
   // Log player data for debugging
   console.log(`Placing tokens for player ${playerId}. Player data:`, player);
 
-  let subgridPositions = [
-    { xStart: 3, xEnd: 5, yStart: 3, yEnd: 5 },
-    { xStart: 9, xEnd: 11, yStart: 3, yEnd: 5 },
-    { xStart: 15, xEnd: 17, yStart: 3, yEnd: 5 },
-    { xStart: 3, xEnd: 5, yStart: 9, yEnd: 11 },
-    { xStart: 15, xEnd: 17, yStart: 9, yEnd: 11 },
-    { xStart: 3, xEnd: 5, yStart: 15, yEnd: 17 },
-    { xStart: 9, xEnd: 11, yStart: 15, yEnd: 17 },
-    { xStart: 15, xEnd: 17, yStart: 15, yEnd: 17 },
-  ];
-
   // Initialize or retrieve the current used subgrid for this player
   if (!player.currentSubgrid) {
     player.currentSubgrid = null;
@@ -335,11 +388,23 @@ function handleArrowPress(xChange = 0, yChange = 0) {
   const newY = oldY + yChange;
   let newDirection = players[playerId].direction;
 
+  const move = [[oldX, oldY], [newX, newY]].toString();
+  let canMove = true;
+
+  if (forbidden_moves.includes(move)) {
+    // Allow the move if it's also a valid door movement
+    if (!door_movements.some(allowedMove => allowedMove.toString() === move)) {
+      canMove = false;
+      console.log(`Player cannot move through walls.`);
+    }
+  }
+
+
   if (
     newX >= 1 &&
     newX <= mapData.maxX &&
     newY >= 1 &&
-    newY <= mapData.maxY
+    newY <= mapData.maxY && canMove
   ) {
     // Move to the next space
     if (xChange === 1) newDirection = "right";
@@ -451,7 +516,7 @@ function shuffle(array) {
 }
 
 // Function to render a door on the grid as a rectangle
-function renderDoor(x, y, color, side) {
+function renderAndStoreDoor(x, y, color, side, subgridIndex) {
   const doorElement = document.createElement("div");
   doorElement.classList.add("Door");
 
@@ -495,20 +560,13 @@ function renderDoor(x, y, color, side) {
 
   // Append the door to the game container
   document.querySelector(".game-container").appendChild(doorElement);
+  let doorPath = `doors/${subgridIndex}/${side}`;
+  let doorData = { x, y, color };
+  updateStateDirect(doorPath, doorData); 
 }
 
 // Modified function to place doors around each subgrid
 function placeDoorsForSubgrid(subgridIndex) {
-  let subgridPositions = [
-    { xStart: 3, xEnd: 5, yStart: 3, yEnd: 5 },
-    { xStart: 9, xEnd: 11, yStart: 3, yEnd: 5 },
-    { xStart: 15, xEnd: 17, yStart: 3, yEnd: 5 },
-    { xStart: 3, xEnd: 5, yStart: 9, yEnd: 11 },
-    { xStart: 15, xEnd: 17, yStart: 9, yEnd: 11 },
-    { xStart: 3, xEnd: 5, yStart: 15, yEnd: 17 },
-    { xStart: 9, xEnd: 11, yStart: 15, yEnd: 17 },
-    { xStart: 15, xEnd: 17, yStart: 15, yEnd: 17 },
-  ];
 
   const subgrid = subgridPositions[subgridIndex];
 
@@ -525,7 +583,7 @@ function placeDoorsForSubgrid(subgridIndex) {
 
   // Loop through each door and place it on the grid with the shuffled color
   doorPositions.forEach((door, index) => {
-    renderDoor(door.x, door.y, shuffledColors[index], door.side);
+    renderAndStoreDoor(door.x, door.y, shuffledColors[index], door.side, subgridIndex);
   });
 }
 
@@ -534,7 +592,6 @@ function placeDoorsForAllSubgrids() {
     placeDoorsForSubgrid(i);
   }
 }
-
 
 
 async function initGame() {
