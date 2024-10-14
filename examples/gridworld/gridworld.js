@@ -445,21 +445,21 @@ async function handleArrowPress(xChange = 0, yChange = 0) {
       console.log(`Detected a door movement. Checking door color...`);
 
       // Retrieve the door data from Firebase
-      const door = await getDoorAtPosition(newX, newY);
+      canMove = await getDoorAtPosition(newX, newY, players[playerId].color);
 
-      if (door) {
-        console.log(`Found door at (${newX}, ${newY}) with color "${door.color}"`);
+      // if (door) {
+      //   console.log(`Found door at (${newX}, ${newY}) with color "${door.color}"`);
 
-        if (door.color !== players[playerId].color) {
-          console.log(`Blocked! Door color "${door.color}" does not match player color "${players[playerId].color}".`);
-          canMove = false;  // Block movement
-        } else {
-          console.log(`Door color matches! Movement allowed.`);
-        }
-      } else {
-        console.log(`No door found at position (${newX}, ${newY}). Blocking movement.`);
-        canMove = false;
-      }
+      //   if (door.color !== players[playerId].color) {
+      //     console.log(`Blocked! Door color "${door.color}" does not match player color "${players[playerId].color}".`);
+      //     canMove = false;  // Block movement
+      //   } else {
+      //     console.log(`Door color matches! Movement allowed.`);
+      //   }
+      // } else {
+      //   console.log(`No door found at position (${newX}, ${newY}). Blocking movement.`);
+      //   canMove = false;
+      // }
     } else {
       console.log(`This is not a door movement. Movement allowed.`);
     }
@@ -579,7 +579,7 @@ function shuffle(array) {
   return array;
 }
 
-async function getDoorAtPosition(x, y) {
+async function getDoorAtPosition(x, y, playerColor) {
   try {
     const doorsData = await readState("doors");  // Fetch doors data from Firebase
     console.log("Retrieved doors data:", doorsData);
@@ -590,6 +590,7 @@ async function getDoorAtPosition(x, y) {
 
       for (let side in subgridDoors) {
         const door = subgridDoors[side];
+        const doorColor = door.color;
         const { x: doorX, y: doorY } = door;
 
         // Debug log: Displaying the door details and side
@@ -597,30 +598,48 @@ async function getDoorAtPosition(x, y) {
 
         // Check matching position based on side
         let isMatch = false;
+        let isMainEntry = false;
 
         switch (side) {
           case "left":
             isMatch = (doorX === x && doorY === y) || (doorX - 1 === x && doorY === y);
-            console.log(`Left door match: ${isMatch}`);
+            isMainEntry = (doorX === x && doorY === y);
+            //console.log(`Left door match: ${isMatch}`);
             break;
           case "right":
             isMatch = (doorX === x && doorY === y) || (doorX + 1 === x && doorY === y);
-            console.log(`Right door match: ${isMatch}`);
+            isMainEntry = (doorX === x && doorY === y);
+            //console.log(`Right door match: ${isMatch}`);
             break;
           case "top":
             isMatch = (doorX === x && doorY === y) || (doorX === x && doorY - 1 === y);
-            console.log(`Top door match: ${isMatch}`);
+            isMainEntry = (doorX === x && doorY === y);
+            //console.log(`Top door match: ${isMatch}`);
             break;
           case "bottom":
             isMatch = (doorX === x && doorY === y) || (doorX === x && doorY + 1 === y);
-            console.log(`Bottom door match: ${isMatch}`);
+            isMainEntry = (doorX === x && doorY === y);
+            //console.log(`Bottom door match: ${isMatch}`);
             break;
         }
 
-        // If a matching door is found, return it
         if (isMatch) {
-          console.log(`Match found! Door at (${doorX}, ${doorY}) with color "${door.color}"`);
-          return door;
+          console.log(`Match found! Door at (${doorX}, ${doorY}) with color "${doorColor}"`);
+
+          if (doorColor === playerColor) {
+            console.log(`Player color matches the door color! Player can pass.`);
+
+            // If it's a main entry, shuffle the doors
+            if (isMainEntry) {
+              console.log(`Main entry detected at door (${doorX}, ${doorY}). Shuffling doors for subgrid ${subgridIndex}.`);
+              await shuffleAndRedrawDoors(subgridIndex);
+            }
+
+            return true;  // Return the matching door if color matches
+          } else {
+            console.log(`Player color "${playerColor}" does not match door color "${doorColor}". Access denied.`);
+            return null;  // Player color doesn't match the door color
+          }
         }
       }
     }
@@ -628,9 +647,88 @@ async function getDoorAtPosition(x, y) {
     console.error("Error fetching door data from Firebase:", error);
   }
 
-  return null;  // No matching door found
+  return null; 
 }
 
+async function shuffleAndRedrawDoors(subgridIndex) {
+  try {
+    const subgrid = subgridPositions[subgridIndex];
+    const doorPositions = [
+      { x: (subgrid.xStart + subgrid.xEnd) / 2, y: subgrid.yStart, side: 'top' },
+      { x: (subgrid.xStart + subgrid.xEnd) / 2, y: subgrid.yEnd, side: 'bottom' },
+      { x: subgrid.xStart, y: (subgrid.yStart + subgrid.yEnd) / 2, side: 'left' },
+      { x: subgrid.xEnd, y: (subgrid.yStart + subgrid.yEnd) / 2, side: 'right' }
+    ];
+
+    let doorColors = ['yellow', 'orange', '#00CCFF', '#9370DB'];  // Example colors
+    let shuffledColors = shuffle(doorColors);  // Shuffle the colors
+
+    // Update the shuffled doors in Firebase
+    const updatedDoors = {};
+    doorPositions.forEach((door, index) => {
+      updatedDoors[door.side] = {
+        x: door.x,
+        y: door.y,
+        color: getColorName(shuffledColors[index]),
+        side: door.side
+      };
+    });
+
+    // Store the updated doors in Firebase
+    await updateStateDirect(`doors/${subgridIndex}`, updatedDoors);
+
+    console.log(`Doors shuffled for subgrid ${subgridIndex}:`, updatedDoors);
+
+    // Redraw the shuffled doors on the grid
+    redrawDoors(subgridIndex, updatedDoors);
+  } catch (error) {
+    console.error(`Error shuffling doors for subgrid ${subgridIndex}:`, error);
+  }
+}
+
+function redrawDoors(subgridIndex, doorsData) {
+  // Remove existing doors for the subgrid
+  document.querySelectorAll(`.Door[data-subgrid="${subgridIndex}"]`).forEach(door => door.remove());
+
+  // Draw new doors based on the updated door data
+  for (let side in doorsData) {
+    const door = doorsData[side];
+    renderDoor(door.x, door.y, getColorCode(door.color), side, subgridIndex);
+  }
+}
+
+function renderDoor(x, y, color, side, subgridIndex) {
+  const doorElement = document.createElement("div");
+  doorElement.classList.add("Door");
+  doorElement.dataset.subgrid = subgridIndex;  // Tag the door with its subgrid
+
+  // Set door background color
+  doorElement.style.backgroundColor = color;
+
+  // Adjust door position with appropriate offsets based on side
+  let left = 16 * (x - 1) + "px";
+  let top = 16 * (y - 1) + "px";
+
+  if (side === 'top' || side === 'bottom') {
+    doorElement.style.width = '18px';
+    doorElement.style.height = '4px';
+    left = 16 * (x - 1) - 1 + "px";
+    if (side === 'top') top = 16 * (y - 1) - 1 + "px";
+    else top = 16 * (y - 1) + 13 + "px";
+  } else {
+    doorElement.style.width = '4px';
+    doorElement.style.height = '18px';
+    top = 16 * (y - 1) - 1 + "px";
+    if (side === 'left') left = 16 * (x - 1) - 1 + "px";
+    else left = 16 * (x - 1) + 13 + "px";
+  }
+
+  // Apply the calculated positions
+  doorElement.style.transform = `translate3d(${left}, ${top}, 0)`;
+
+  // Append the door to the game container
+  document.querySelector(".game-container").appendChild(doorElement);
+}
 
 // Function to render a door and optionally store it in Firebase
 async function renderAndStoreDoor(x, y, color, side, subgridIndex, shouldStore = true) {
