@@ -75,7 +75,7 @@ let funList = {
 };
 
 // List the node names where we place listeners for any changes to the children of these nodes; set to '' if listening to changes for children of the root
-let listenerPaths = [ 'coins' , 'players' ];
+let listenerPaths = ['coins', 'players', 'doors'];
 
 // Set the session configuration for MPLIB
 initializeMPLIB( sessionConfig , studyId , funList, listenerPaths, verbosity );
@@ -160,6 +160,56 @@ forbidden_moves = Array.from(new Set(forbidden_moves));
 
 // Options for Player Colors... these are in the same order as our sprite sheet
 const playerColors = ["blue", "orange", "yellow", "purple"];
+
+const colorMap = {
+  "#00ccff": "blue",
+  "#9370db": "purple",
+  "yellow": "yellow",
+  "orange": "orange"
+};
+
+function getColorName(colorCode) {
+  const normalizedCode = colorCode.trim().toLowerCase();  // Normalize input
+  //console.log(`getColorName called with: "${colorCode}", Normalized: "${normalizedCode}"`);
+
+  if(normalizedCode ===  "#00ccff"){
+    console.log('Match found: blue');
+    return "blue";
+  }else if(normalizedCode === "#9370db"){
+    console.log('Match found: purple');
+    return "purple";
+  }else{
+    return colorCode; 
+  }
+}
+
+// Normalize and match the name back to the color code
+function getColorCode(colorName) {
+  const normalizedName = colorName.trim().toLowerCase();  // Normalize input
+  //console.log(`getColorCode called with: "${colorName}", Normalized: "${normalizedName}"`);
+
+  // Match the color name to the code using the colorMap
+  let code;
+  switch (normalizedName) {
+    case "blue":
+      code = "#00ccff";
+      break;
+    case "purple":
+      code = "#9370db";
+      break;
+    case "yellow":
+      code = "yellow";  // Example if stored as a string name
+      break;
+    case "orange":
+      code = "orange";  // Example if stored as a string name
+      break;
+    default:
+      code = colorName;  // Return original name if no match found
+  }
+
+  //console.log(`Result for getColorCode: ${code}`);
+  return code;
+}
 
 let playerId;
 let playerRef;
@@ -273,7 +323,7 @@ async function placeTokensForPlayer(playerId) {
   if (!player) return;
 
   // Log player data for debugging
-  console.log(`Placing tokens for player ${playerId}. Player data:`, player);
+  // console.log(`Placing tokens for player ${playerId}. Player data:`, player);
 
   // Initialize or retrieve the current used subgrid for this player
   if (!player.currentSubgrid) {
@@ -284,7 +334,7 @@ async function placeTokensForPlayer(playerId) {
   let allUsedSubgrids = Object.values(players)
     .map(p => (p.currentSubgrid != null) ? p.currentSubgrid - 1 : null); 
   // Log all used subgrids for debugging
-  console.log(`All used subgrids by players:`, allUsedSubgrids);
+  // console.log(`All used subgrids by players:`, allUsedSubgrids);
 
   // Filter out subgrids used by other players, but include the player's own subgrid
   let availableSubgrids = subgridPositions.filter((_, index) => 
@@ -292,7 +342,7 @@ async function placeTokensForPlayer(playerId) {
   );
 
   // Log available subgrids for debugging
-  console.log(`Available subgrids for player ${playerId}:`, availableSubgrids);
+  // console.log(`Available subgrids for player ${playerId}:`, availableSubgrids);
 
   // Select a new subgrid randomly from the available ones
   let subgridIndex = Math.floor(Math.random() * availableSubgrids.length);
@@ -309,7 +359,7 @@ async function placeTokensForPlayer(playerId) {
   };
 
   // Log the new subgrid for debugging
-  console.log(`Assigning new subgrid ${subgridPositionIndex} to player ${playerId}`);
+  // console.log(`Assigning new subgrid ${subgridPositionIndex} to player ${playerId}`);
 
   await updateStateDirect(path, newState);
 
@@ -327,6 +377,7 @@ async function placeTokensForPlayer(playerId) {
       let newState = { x, y, color: player.color, id: playerId }; // Set the coin color to match the player
 
       updateStateDirect(id, newState); // Save the new state in Firebase
+      //console.log(`Coin data written to ${id}:`, newState); 
 
       placedPositions.add(positionKey); // Mark this position as used
       i++; // Only increment after a successful placement
@@ -334,18 +385,8 @@ async function placeTokensForPlayer(playerId) {
   }
 
   // Log token placement for debugging
-  console.log(`Placed tokens for player ${playerId} in subgrid ${subgridPositionIndex}`);
+  //console.log(`Placed tokens for player ${playerId} in subgrid ${subgridPositionIndex}`);
 }
-
-
-
-// // Handle token collection and place new groups when needed
-// function handleCoinCollection(playerId) {
-//   let player = players[playerId];
-//   if (player.coins % 3 === 0) { // Check if the player collected a group of three
-//     placeTokensForPlayer(playerId); // Place a new group of tokens
-//   }
-// }
 
 async function handleCoinCollection(playerId) {
   let player = players[playerId];
@@ -362,7 +403,7 @@ async function handleCoinCollection(playerId) {
   // Check if all coins for this player are removed
   if (playerCoins.length === 0) {
     // Log that all coins are collected
-    console.log(`All coins collected for player ${playerId}. Placing a new group.`);
+    //console.log(`All coins collected for player ${playerId}. Placing a new group.`);
 
     // Place a new group of three coins
     await placeTokensForPlayer(playerId);
@@ -381,7 +422,7 @@ async function getCoinData(key) {
 }
 
 
-function handleArrowPress(xChange = 0, yChange = 0) {
+async function handleArrowPress(xChange = 0, yChange = 0) {
   const oldX = players[playerId].x;
   const oldY = players[playerId].y;
   const newX = oldX + xChange;
@@ -392,14 +433,38 @@ function handleArrowPress(xChange = 0, yChange = 0) {
   let canMove = true;
 
   if (forbidden_moves.includes(move)) {
-    // Allow the move if it's also a valid door movement
-    if (!door_movements.some(allowedMove => allowedMove.toString() === move)) {
-      canMove = false;
-      console.log(`Player cannot move through walls.`);
+    console.log(`Blocked: This is a forbidden (wall) move.`);
+    canMove = false;
+  } else {
+    // Step 2: Check if it's a valid door movement
+    const isDoorMovement = door_movements.some(
+      allowedMove => allowedMove.toString() === move
+    );
+
+    if (isDoorMovement) {
+      console.log(`Detected a door movement. Checking door color...`);
+
+      // Retrieve the door data from Firebase
+      const door = await getDoorAtPosition(newX, newY);
+
+      if (door) {
+        console.log(`Found door at (${newX}, ${newY}) with color "${door.color}"`);
+
+        if (door.color !== players[playerId].color) {
+          console.log(`Blocked! Door color "${door.color}" does not match player color "${players[playerId].color}".`);
+          canMove = false;  // Block movement
+        } else {
+          console.log(`Door color matches! Movement allowed.`);
+        }
+      } else {
+        console.log(`No door found at position (${newX}, ${newY}). Blocking movement.`);
+        canMove = false;
+      }
+    } else {
+      console.log(`This is not a door movement. Movement allowed.`);
     }
   }
-
-
+  
   if (
     newX >= 1 &&
     newX <= mapData.maxX &&
@@ -416,12 +481,12 @@ function handleArrowPress(xChange = 0, yChange = 0) {
     // Retrieve the coin data
     getCoinData(key).then((coin) => {
       // // Log the coin object to verify its structure
-      // console.log(`Coin Object:`, coin);
+      //console.log(`Coin Object:`, coin);
 
       // Check if the coin object has a color property
       if (coin && coin.color) {
         // Log the colors for debugging
-        // console.log(`Coin Color: ${coin.color}, Player Color: ${players[playerId].color}`);
+        //console.log(`Coin Color: ${coin.color}, Player Color: ${players[playerId].color}`);
 
         // Check if the coin's color matches the player's color
         if (coin.color.trim() === players[playerId].color.trim()) {
@@ -432,7 +497,6 @@ function handleArrowPress(xChange = 0, yChange = 0) {
           let path = `coins/${key}`;
           let newState = null;
           updateStateDirect(path, newState);
-
           // Handle collection logic, possibly placing new coins
           handleCoinCollection(playerId);
         } else {
@@ -515,59 +579,108 @@ function shuffle(array) {
   return array;
 }
 
-// Function to render a door on the grid as a rectangle
-function renderAndStoreDoor(x, y, color, side, subgridIndex) {
+async function getDoorAtPosition(x, y) {
+  try {
+    const doorsData = await readState("doors");  // Fetch doors data from Firebase
+    console.log("Retrieved doors data:", doorsData);
+
+    // Iterate over each subgrid and door to find the matching door or adjacent door
+    for (let subgridIndex in doorsData) {
+      const subgridDoors = doorsData[subgridIndex];
+
+      for (let side in subgridDoors) {
+        const door = subgridDoors[side];
+        const { x: doorX, y: doorY } = door;
+
+        // Debug log: Displaying the door details and side
+        console.log(`Checking door at (${doorX}, ${doorY}) on side "${side}" against player position (${x}, ${y})`);
+
+        // Check matching position based on side
+        let isMatch = false;
+
+        switch (side) {
+          case "left":
+            isMatch = (doorX === x && doorY === y) || (doorX - 1 === x && doorY === y);
+            console.log(`Left door match: ${isMatch}`);
+            break;
+          case "right":
+            isMatch = (doorX === x && doorY === y) || (doorX + 1 === x && doorY === y);
+            console.log(`Right door match: ${isMatch}`);
+            break;
+          case "top":
+            isMatch = (doorX === x && doorY === y) || (doorX === x && doorY - 1 === y);
+            console.log(`Top door match: ${isMatch}`);
+            break;
+          case "bottom":
+            isMatch = (doorX === x && doorY === y) || (doorX === x && doorY + 1 === y);
+            console.log(`Bottom door match: ${isMatch}`);
+            break;
+        }
+
+        // If a matching door is found, return it
+        if (isMatch) {
+          console.log(`Match found! Door at (${doorX}, ${doorY}) with color "${door.color}"`);
+          return door;
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Error fetching door data from Firebase:", error);
+  }
+
+  return null;  // No matching door found
+}
+
+
+// Function to render a door and optionally store it in Firebase
+async function renderAndStoreDoor(x, y, color, side, subgridIndex, shouldStore = true) {
   const doorElement = document.createElement("div");
   doorElement.classList.add("Door");
 
   // Set door background color
-  doorElement.style.backgroundColor = color;
+  const colorCode = getColorCode(color);
+  doorElement.style.backgroundColor = colorCode;
 
   // Adjust door position with appropriate offsets based on side
-  let left = 16 * (x - 1) + "px"; // Default left position
-  let top = 16 * (y - 1) + "px";  // Default top position
+  let left = 16 * (x - 1) + "px";
+  let top = 16 * (y - 1) + "px";
 
-  // Adjust the width/height based on the side
   if (side === 'top' || side === 'bottom') {
     doorElement.style.width = '18px';
-    doorElement.style.height = '4px';  // Horizontal door
-
-    // Adjust position for top or bottom alignment
-    left = 16 * (x - 1) - 1 + "px";  // Center it horizontally
-
-    if (side === 'top') {
-      top = 16 * (y -1) - 1 + "px";  // Move slightly up for top door
-    } else if (side === 'bottom') {
-      top = 16 * (y - 1) + 13 + "px";  // Move slightly down for bottom door
-    }
-
+    doorElement.style.height = '4px';
+    left = 16 * (x - 1) - 1 + "px";
+    top = (side === 'top') ? 16 * (y - 1) - 1 + "px" : 16 * (y - 1) + 13 + "px";
   } else if (side === 'left' || side === 'right') {
     doorElement.style.width = '4px';
-    doorElement.style.height = '18px'; // Vertical door
-
-    // Adjust position for left or right alignment
-    top = 16 * (y - 1) - 1 + "px";  // Center it vertically
-
-    if (side === 'left') {
-      left = 16 * (x - 1) - 1 + "px";  // Move slightly left for left door
-    } else if (side === 'right') {
-      left = 16 * (x - 1) + 13 + "px";  // Move slightly right for right door
-    }
+    doorElement.style.height = '18px';
+    top = 16 * (y - 1) - 1 + "px";
+    left = (side === 'left') ? 16 * (x - 1) - 1 + "px" : 16 * (x - 1) + 13 + "px";
   }
 
-  // Apply the calculated positions
   doorElement.style.transform = `translate3d(${left}, ${top}, 0)`;
 
   // Append the door to the game container
   document.querySelector(".game-container").appendChild(doorElement);
-  let doorPath = `doors/${subgridIndex}/${side}`;
-  let doorData = { x, y, color };
-  updateStateDirect(doorPath, doorData); 
+
+  // Store the door data in Firebase if necessary
+  if (shouldStore) {
+    let doorPath = `doors/${subgridIndex}`;
+    let doorData = await readState(doorPath) || {};  // Read existing doors, or initialize
+
+    doorColor = getColorName(colorCode);
+
+    console.log(`getColorName called with: "${colorCode}", Normalized: "${normalizedCode}"`);
+
+    // Add the new door data for the specified side
+    doorData[side] = { x, y,  doorColor, side };
+
+    // Store the door in Firebase
+    await updateStateDirect(doorPath, doorData);
+  }
 }
 
 // Modified function to place doors around each subgrid
-function placeDoorsForSubgrid(subgridIndex) {
-
+async function placeDoorsForSubgrid(subgridIndex) {
   const subgrid = subgridPositions[subgridIndex];
 
   const doorPositions = [
@@ -577,26 +690,41 @@ function placeDoorsForSubgrid(subgridIndex) {
     { x: subgrid.xEnd, y: (subgrid.yStart + subgrid.yEnd) / 2, side: 'right' }     // Right Door
   ];
 
-  let doorColors = ['yellow', 'orange', '#00CCFF', '#9370DB'];
-
+  let doorColors = ['yellow', 'orange', '#00CCFF', '#9370DB'];  // Example colors
   let shuffledColors = shuffle(doorColors);
 
-  // Loop through each door and place it on the grid with the shuffled color
-  doorPositions.forEach((door, index) => {
-    renderAndStoreDoor(door.x, door.y, shuffledColors[index], door.side, subgridIndex);
-  });
+   // Check if the doors are already stored in Firebase
+  let doorsData = await readState(`doors/${subgridIndex}`);
+
+   if (!doorsData) {
+     // Store new doors if none exist yet 
+     doorsData = {};
+     doorPositions.forEach((door, index) => {
+       doorsData[door.side] = {
+         x: door.x,
+         y: door.y,
+         color: getColorName(shuffledColors[index]),
+         side: door.side
+       };
+     });
+     await updateStateDirect(`doors/${subgridIndex}`, doorsData);
+   }
+ 
+   // Render all doors for this subgrid
+   Object.keys(doorsData).forEach(side => {
+     const door = doorsData[side];
+     renderAndStoreDoor(door.x, door.y, door.color, side, subgridIndex, false);
+   });
 }
 
 function placeDoorsForAllSubgrids() {
-  for (let i = 0; i < 8; i++) {
-    placeDoorsForSubgrid(i);
+  for (let i = 0; i < subgridPositions.length; i++) {
+    placeDoorsForSubgrid(i);  // Initialize doors for all subgrids
   }
 }
 
 
 async function initGame() {
-
-    placeDoorsForAllSubgrids() 
     // Get the id of this player
     playerId = getCurrentPlayerId();
 
@@ -640,6 +768,7 @@ async function initGame() {
 
     // Place first coin
     placeTokensForPlayer(playerId);
+    placeDoorsForAllSubgrids();
 }
 
 // --------------------------------------------------------------------------------------
@@ -756,6 +885,33 @@ function receiveStateChange(pathNow,nodeName, newState, typeChange ) {
       delete coins[key];
       gameContainer.removeChild( coinElements[key] );
       delete coinElements[key];
+  }
+
+  if (pathNow.startsWith("doors")) {
+    const subgridIndex = nodeName;  // Node name contains the subgrid index
+
+    console.log(`Updating doors for subgrid ${subgridIndex}`, newState);
+
+    // Loop over the doors stored under this subgrid
+    for (const side in newState) {
+      if (newState.hasOwnProperty(side)) {
+        const doorData = newState[side];
+
+        console.log(`Rendering door for ${side}:`, doorData);
+
+        // Render the door for each side of the subgrid
+        if (typeChange === 'onChildAdded' || typeChange === 'onChildChanged') {
+          renderAndStoreDoor(
+            doorData.x,
+            doorData.y,
+            doorData.color,
+            side,
+            subgridIndex,
+            false  // Don't store again during rendering
+          );
+        }
+      }
+    }
   }
 }
 
