@@ -265,3 +265,45 @@ button:active {
   z-index: 2;     /* Ensure the door appears above other elements */
   border-radius: 2px; /* Optional: Round the edges for a smooth look */
 }
+
+/* Overlay with gradient background */
+.break-overlay {
+  position: fixed;  /* Ensure the overlay covers the entire screen */
+  top: 0;
+  left: 0;
+  width: 100vw;  /* Full width of the viewport */
+  height: 100vh;  /* Full height of the viewport */
+  background: linear-gradient(to bottom right, #86d6e1, #42a7f4);  /* Light blue to darker blue gradient */
+  z-index: 10000;  /* High z-index to ensure it covers everything */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  visibility: hidden;  /* Hidden by default */
+  text-align: center;
+}
+
+.overlay-block {
+  background-color: rgba(255, 255, 255, 0.1);  /* Light blue background (slightly transparent) */
+  width: 80%;
+  max-width: 740px;
+  min-width: 740px;
+  padding: 20px;
+  border-radius: 15px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);  /* Same shadow effect */
+  text-align: center;
+}
+
+/* Title styled like the instructions title */
+.overlay-block h1 {
+  font-family: 'Poppins', sans-serif;
+  font-weight: bold;
+  font-size: 28px;
+  color: white;
+}
+
+/* Message styled like the instructions text */
+.overlay-block p {
+  font-family: 'Poppins', sans-serif;
+  font-size: 18px;
+  color: white;
+}

@@ -1,9 +1,10 @@
 // Your web app's Firebase configuration
 const firebasempConfig = {
-    apiKey: "AIzaSyB0zBbR6ljy6GmmBPtqJFuG3b6t3FGG_P0",
-    authDomain: "multiplayer-debug-780ad.firebaseapp.com",
-    projectId: "multiplayer-debug-780ad",
-    storageBucket: "multiplayer-debug-780ad.appspot.com",
-    messagingSenderId: "1058404562799",
-    appId: "1:1058404562799:web:25e8af3489564c5dcbda9a"
+    apiKey: "AIzaSyDwpzcbcpT3fviz9XMBYYc0LbE7HRz_FsE",
+    authDomain: "multiplayer-demo-d817e.firebaseapp.com",
+    databaseURL: "https://multiplayer-demo-d817e-default-rtdb.firebaseio.com",
+    projectId: "multiplayer-demo-d817e",
+    storageBucket: "multiplayer-demo-d817e.appspot.com",
+    messagingSenderId: "992218527696",
+    appId: "1:992218527696:web:5bb17e83b64154e7c8ebd5"
 };

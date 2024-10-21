@@ -48,7 +48,7 @@ const studyId = 'gridworld';
 
 // Configuration setting for the session
 let sessionConfig = {
-    minPlayersNeeded: 1, // Minimum number of players needed; if set to 1, there is no waiting room (unless a countdown has been setup)
+    minPlayersNeeded: 2, // Minimum number of players needed; if set to 1, there is no waiting room (unless a countdown has been setup)
     maxPlayersNeeded: 4, // Maximum number of players allowed in a session
     maxParallelSessions: 0, // Maximum number of sessions in parallel (if zero, there are no limit)
     allowReplacements: true, // Allow replacing any players who leave an ongoing session?
@@ -218,6 +218,94 @@ let playerElements = {};
 let coins = {};
 let coinElements = {};
 let hasEnded = false;
+let roundTime = 20;  // 90 seconds per round
+let breakTime = 5;   // 5-second break between rounds
+let roundInterval = null; // To store the round timer interval
+let isBreakTime = false; 
+
+let introColor;
+let introName;
+
+function startNewRound() {
+  console.log("Starting a new round...");
+  isBreakTime = false;
+  resetCoinsAndDoors();
+  document.getElementById('breakOverlay').style.visibility = 'hidden'; 
+  //messageGame.innerText = "Round Started! Collect coins!";
+
+  roundInterval = setTimeout(endRound, roundTime * 1000);  // End the round after 90 seconds
+}
+
+function endRound() {
+  isBreakTime = true;
+  //messageGame.innerText = "Round ended. Next round starts in 5 seconds...";
+
+  document.getElementById('roundTitle').innerText = "Round Ended";
+  document.getElementById('roundMessage').innerText = `Next round starts in 5 seconds...\nYou are ${introName}, and you can only collect ${introColor} tokens and go through ${introColor} doors.`;
+
+  // Show the overlay
+  document.getElementById('breakOverlay').style.visibility = 'visible';
+  
+  // Start a 5-second break
+  setTimeout(() => {
+      //messageGame.innerText = "New Round Starting!";
+      startNewRound();  // Start the new round after 5 seconds
+  }, breakTime * 1000);
+}
+
+function resetCoinsAndDoors() {
+  console.log("Resetting coins, doors, and player positions for a new round...");
+
+  // Step 1: Remove all current coins
+  console.log("Removing all current coins...");
+  let currentCoins = Object.keys(coins);
+  currentCoins.forEach(coinKey => {
+      let path = `coins/${coinKey}`;
+      updateStateDirect(path, null);  // Remove coin from Firebase
+  });
+  coins = {};  // Clear local coin state
+
+  // Step 2: Move all players to starting position
+  Object.keys(players).forEach(playerId => {
+      let player = players[playerId];
+      let startX = 1;
+      let startY = 1;
+      console.log(`Moving player ${playerId} to starting position...`);
+
+      // Update player's position to the starting coordinates (1,1)
+      let path = `players/${playerId}`;
+      let newState = {
+          ...player,
+          x: startX,
+          y: startY,
+          oldX: player.x,
+          oldY: player.y,
+      };
+      updateStateDirect(path, newState);
+  });
+
+  // Step 3: Place new coins for each player
+  Object.keys(players).forEach(playerId => {
+      console.log(`Placing new coins for player ${playerId}...`);
+      placeTokensForPlayer(playerId);  // Place new coins
+  });
+
+  // Step 4: Reset doors
+  console.log("Resetting doors for all subgrids...");
+  placeDoorsForAllSubgrids();  // Place new doors
+}
+
+async function initRounds() {
+  console.log("Initializing Rounds...");
+
+  
+  document.getElementById('roundTitle').innerText = "Round Starting in 5 seconds.";
+  document.getElementById('roundMessage').innerText = `You are ${introName}, and you can only collect ${introColor} tokens and go through ${introColor} doors.`;
+
+  document.getElementById('breakOverlay').style.visibility = 'visible';
+  setTimeout(startNewRound, 5000);  // Give players 5 seconds to get ready before the first round
+}
+
 
 
 // -------------------------------------
@@ -821,7 +909,6 @@ function placeDoorsForAllSubgrids() {
   }
 }
 
-
 async function initGame() {
     // Get the id of this player
     playerId = getCurrentPlayerId();
@@ -840,14 +927,38 @@ async function initGame() {
         name = createName(); 
     } while (playerNames.includes( name ));
 
-    let color = await assignUniqueColor(); // Get a unique color for the player
-    if (!color) return; // Exit if no color is available
+    // let color = await assignUniqueColor(); // Get a unique color for the player
+    // if (!color) return; // Exit if no color is available
+
+    let arrivalIndex = getCurrentPlayerArrivalIndex() % 4;
+    let color;
+
+    switch (arrivalIndex) {
+        case 1:
+            color = "blue";
+            break;
+        case 2:
+            color = "orange";
+            break;
+        case 3:
+            color = "yellow";
+            break;
+        case 0:
+            color = "purple";
+            break;
+        default:
+            color = "gray"; // Fallback color
+    }
+
  
     // Show the player name
     let str = `You are: ${name}`;
     messageGame.innerHTML = str;
     
     const {x, y} = { x: 1, y: 1 }; 
+
+    introColor = color;
+    introName = name;
     
     // Broadcast this new player position to the database
     let path = `players/${playerId}`;
@@ -864,9 +975,9 @@ async function initGame() {
         };
     updateStateDirect(path, newState);
 
-    // Place first coin
-    placeTokensForPlayer(playerId);
-    placeDoorsForAllSubgrids();
+    // // Place first coin
+    // placeTokensForPlayer(playerId);
+    // placeDoorsForAllSubgrids();
 }
 
 // --------------------------------------------------------------------------------------
@@ -1051,8 +1162,8 @@ function joinWaitingRoom() {
 
   let playerId = getCurrentPlayerId(); // the playerId for this client
   let numPlayers = getNumberCurrentPlayers(); // the current number of players
-  let numNeeded = sessionConfig.minPlayersNeeded - numPlayers; // Number of players still needed (in case the player is currently in a waiting room)
-  
+  let numNeeded = sessionConfig.minPlayersNeeded - numPlayers;
+ 
   let str2 = `Waiting for ${ numNeeded } additional ${ numPlayers > 1 ? 'players' : 'player' }...`;
   messageWaitingRoom.innerText = str2;
   
@@ -1091,7 +1202,15 @@ function updateWaitingRoom() {
   }
 }
 
-function startSession() {
+async function startSession() {
+
+  let numPlayers = getNumberCurrentPlayers();
+  
+  if (numPlayers < sessionConfig.minPlayersNeeded) {
+    console.log("Not enough players to start the game.");
+    return;  // Exit the function early if there are not enough players
+  }
+
   /*
       Funtionality to invoke when starting a session.
 
@@ -1119,8 +1238,8 @@ function startSession() {
 
   //let str2 = `You are: Player${getCurrentPlayerArrivalIndex()}`;
   //messageGame.innerHTML = str2;
-
-  initGame();
+  await initGame();
+  initRounds();
 }
 
 function updateOngoingSession() {
