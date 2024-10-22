@@ -284,11 +284,12 @@ function resetCoinsAndDoors() {
       updateStateDirect(path, newState);
   });
 
-  // Step 3: Place new coins for each player
-  Object.keys(players).forEach(playerId => {
-      console.log(`Placing new coins for player ${playerId}...`);
-      placeTokensForPlayer(playerId);  // Place new coins
-  });
+  // Step 3: Place new coins for this player
+  // Object.keys(players).forEach(playerId => {
+  //     console.log(`Placing new coins for player ${playerId}...`);
+  //     placeTokensForPlayer(playerId);  // Place new coins
+  // });
+  placeTokensForPlayer(playerId);
 
   // Step 4: Reset doors
   console.log("Resetting doors for all subgrids...");
@@ -298,7 +299,7 @@ function resetCoinsAndDoors() {
 async function initRounds() {
   console.log("Initializing Rounds...");
 
-  
+  gameScreen.style.display = 'block';
   document.getElementById('roundTitle').innerText = "Round Starting in 5 seconds.";
   document.getElementById('roundMessage').innerText = `You are ${introName}, and you can only collect ${introColor} tokens and go through ${introColor} doors.`;
 
@@ -1226,7 +1227,7 @@ async function startSession() {
 
   instructionsScreen.style.display = 'none';
   waitingRoomScreen.style.display = 'none';
-  gameScreen.style.display = 'block';
+  gameScreen.style.display = 'none';
   
   let playerId = getCurrentPlayerId(); // the playerId for this client
   let dateString = timeStr(getPlayerInfo( playerId ).sessionStartedAt);
