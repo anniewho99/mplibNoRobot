@@ -238,6 +238,10 @@ let currentRound = 0;
 let trapTime = 10; 
 let trapFlag = false;
 
+let totalRounds = 4;
+
+let trappedIndex;
+
 function startNewRound() {
   console.log("Starting a new round...");
   isBreakTime = false;
@@ -247,12 +251,18 @@ function startNewRound() {
 
   currentRound = currentRound + 1;
 
-  roundInterval = setTimeout(endRound, roundTime * 1000);  // End the round after 90 seconds
-  setTimeout(() => {
-    trapFlag = true;
-    console.log("its ok to trap the player now!");
-    // Add any additional logic to handle trapping, such as removing doors
-}, trapTime * 1000)
+  if (currentRound <= totalRounds) {
+    roundInterval = setTimeout(endRound, roundTime * 1000);  // End the round after 90 seconds
+    setTimeout(() => {
+      trapFlag = true;
+      console.log("its ok to trap the player now!");
+      // Add any additional logic to handle trapping, such as removing doors
+  }, trapTime * 1000);
+  }else{
+    endSession();
+  }
+
+
 }
 
 function endRound() {
@@ -272,7 +282,7 @@ function endRound() {
   }, breakTime * 1000);
 }
 
-function resetCoinsAndDoors() {
+async function resetCoinsAndDoors() {
   console.log("Resetting coins, doors, and player positions for a new round...");
 
   // Step 1: Remove all current coins
@@ -310,8 +320,17 @@ function resetCoinsAndDoors() {
   // });
   placeTokensForPlayer(playerId);
 
+    let player = players[playerId];
+    let path = `players/${playerId}`;
+    let newState = {
+      ...player,
+      isTrapped: false,
+    };
+    await updateStateDirect(path, newState);
+
   // Step 4: Reset doors
   console.log("Resetting doors for all subgrids...");
+  await shuffleAndRedrawDoors(trappedIndex);
   placeDoorsForAllSubgrids();  // Place new doors
 }
 
@@ -553,7 +572,7 @@ async function handleArrowPress(xChange = 0, yChange = 0) {
       //console.log(`Detected a door movement. Checking door color...`);
 
       // Retrieve the door data from Firebase
-      canMove = await getDoorAtPosition(newX, newY, players[playerId].color);
+      canMove = await getDoorAtPosition(newX, newY, players[playerId].color, playerId);
 
       // if (door) {
       //   console.log(`Found door at (${newX}, ${newY}) with color "${door.color}"`);
@@ -627,6 +646,7 @@ async function handleArrowPress(xChange = 0, yChange = 0) {
       x: newX,
       y: newY,
       coins: players[playerId].coins,
+      isTrapped: players[playerId].isTrapped,
     };
     updateStateDirect(path, newState);
   }
@@ -687,7 +707,7 @@ function shuffle(array) {
   return array;
 }
 
-async function getDoorAtPosition(x, y, playerColor) {
+async function getDoorAtPosition(x, y, playerColor, playerId) {
   try {
     const doorsData = await readState("doors");  // Fetch doors data from Firebase
     //console.log("Retrieved doors data:", doorsData);
@@ -741,8 +761,22 @@ async function getDoorAtPosition(x, y, playerColor) {
             if (isMainEntry) {
               const isPlayerTrapped = trapSchedule[currentRound]?.includes(getCurrentPlayerArrivalIndex() % 4);
               if(isPlayerTrapped && trapFlag === true){
+                let player = players[playerId];
+                let path = `players/${playerId}`;
+                let newState = {
+                  ...player,
+                  isTrapped: true,
+                };
+                await updateStateDirect(path, newState);
                 console.log("time to trap this player");
+                console.log(players[playerId]);
+                subgridDoors[side].color = "grey";  
+                await updateStateDirect(`doors/${subgridIndex}`, subgridDoors);  // Update Firebase
+
+                // Step 2: Update the door visually
+                renderDoor(doorX, doorY, "grey", side, subgridIndex); 
                 trapFlag = 'used';
+                trappedIndex = subgridIndex;
               }else{
                 console.log(`Main entry detected at door (${doorX}, ${doorY}). Shuffling doors for subgrid ${subgridIndex}.`);
                 await shuffleAndRedrawDoors(subgridIndex);
@@ -999,6 +1033,7 @@ async function initGame() {
           x,
           y,
           coins: 0,
+          isTrapped: false,
         };
     updateStateDirect(path, newState);
 
