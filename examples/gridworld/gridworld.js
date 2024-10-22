@@ -94,6 +94,14 @@ let mapData = {
   blockedSpaces: {  },
 };
 
+const trapSchedule = {
+  1: [1],   // Player 1 trapped in round 1 and 2
+  2: [1],
+  3: [2],   // Player 2 trapped in round 3 and 4
+  4: [2],
+}
+
+
 let subgridPositions = [
   { xStart: 3, xEnd: 5, yStart: 3, yEnd: 5 },
   { xStart: 9, xEnd: 11, yStart: 3, yEnd: 5 },
@@ -173,10 +181,10 @@ function getColorName(colorCode) {
   //console.log(`getColorName called with: "${colorCode}", Normalized: "${normalizedCode}"`);
 
   if(normalizedCode ===  "#00ccff"){
-    console.log('Match found: blue');
+    //console.log('Match found: blue');
     return "blue";
   }else if(normalizedCode === "#9370db"){
-    console.log('Match found: purple');
+    //console.log('Match found: purple');
     return "purple";
   }else{
     return colorCode; 
@@ -226,6 +234,10 @@ let isBreakTime = false;
 let introColor;
 let introName;
 
+let currentRound = 0;
+let trapTime = 10; 
+let trapFlag = false;
+
 function startNewRound() {
   console.log("Starting a new round...");
   isBreakTime = false;
@@ -233,7 +245,14 @@ function startNewRound() {
   document.getElementById('breakOverlay').style.visibility = 'hidden'; 
   //messageGame.innerText = "Round Started! Collect coins!";
 
+  currentRound = currentRound + 1;
+
   roundInterval = setTimeout(endRound, roundTime * 1000);  // End the round after 90 seconds
+  setTimeout(() => {
+    trapFlag = true;
+    console.log("its ok to trap the player now!");
+    // Add any additional logic to handle trapping, such as removing doors
+}, trapTime * 1000)
 }
 
 function endRound() {
@@ -522,7 +541,7 @@ async function handleArrowPress(xChange = 0, yChange = 0) {
   let canMove = true;
 
   if (forbidden_moves.includes(move)) {
-    console.log(`Blocked: This is a forbidden (wall) move.`);
+    //console.log(`Blocked: This is a forbidden (wall) move.`);
     canMove = false;
   } else {
     // Step 2: Check if it's a valid door movement
@@ -531,7 +550,7 @@ async function handleArrowPress(xChange = 0, yChange = 0) {
     );
 
     if (isDoorMovement) {
-      console.log(`Detected a door movement. Checking door color...`);
+      //console.log(`Detected a door movement. Checking door color...`);
 
       // Retrieve the door data from Firebase
       canMove = await getDoorAtPosition(newX, newY, players[playerId].color);
@@ -550,7 +569,7 @@ async function handleArrowPress(xChange = 0, yChange = 0) {
       //   canMove = false;
       // }
     } else {
-      console.log(`This is not a door movement. Movement allowed.`);
+      //console.log(`This is not a door movement. Movement allowed.`);
     }
   }
   
@@ -671,7 +690,7 @@ function shuffle(array) {
 async function getDoorAtPosition(x, y, playerColor) {
   try {
     const doorsData = await readState("doors");  // Fetch doors data from Firebase
-    console.log("Retrieved doors data:", doorsData);
+    //console.log("Retrieved doors data:", doorsData);
 
     // Iterate over each subgrid and door to find the matching door or adjacent door
     for (let subgridIndex in doorsData) {
@@ -683,7 +702,7 @@ async function getDoorAtPosition(x, y, playerColor) {
         const { x: doorX, y: doorY } = door;
 
         // Debug log: Displaying the door details and side
-        console.log(`Checking door at (${doorX}, ${doorY}) on side "${side}" against player position (${x}, ${y})`);
+        //console.log(`Checking door at (${doorX}, ${doorY}) on side "${side}" against player position (${x}, ${y})`);
 
         // Check matching position based on side
         let isMatch = false;
@@ -713,15 +732,22 @@ async function getDoorAtPosition(x, y, playerColor) {
         }
 
         if (isMatch) {
-          console.log(`Match found! Door at (${doorX}, ${doorY}) with color "${doorColor}"`);
+          //console.log(`Match found! Door at (${doorX}, ${doorY}) with color "${doorColor}"`);
 
           if (doorColor === playerColor) {
             console.log(`Player color matches the door color! Player can pass.`);
 
             // If it's a main entry, shuffle the doors
             if (isMainEntry) {
-              console.log(`Main entry detected at door (${doorX}, ${doorY}). Shuffling doors for subgrid ${subgridIndex}.`);
-              await shuffleAndRedrawDoors(subgridIndex);
+              const isPlayerTrapped = trapSchedule[currentRound]?.includes(getCurrentPlayerArrivalIndex() % 4);
+              if(isPlayerTrapped && trapFlag === true){
+                console.log("time to trap this player");
+                trapFlag = 'used';
+              }else{
+                console.log(`Main entry detected at door (${doorX}, ${doorY}). Shuffling doors for subgrid ${subgridIndex}.`);
+                await shuffleAndRedrawDoors(subgridIndex);
+              }
+
             }
 
             return true;  // Return the matching door if color matches
@@ -766,7 +792,7 @@ async function shuffleAndRedrawDoors(subgridIndex) {
     // Store the updated doors in Firebase
     await updateStateDirect(`doors/${subgridIndex}`, updatedDoors);
 
-    console.log(`Doors shuffled for subgrid ${subgridIndex}:`, updatedDoors);
+    //console.log(`Doors shuffled for subgrid ${subgridIndex}:`, updatedDoors);
 
     // Redraw the shuffled doors on the grid
     redrawDoors(subgridIndex, updatedDoors);
@@ -856,7 +882,7 @@ async function renderAndStoreDoor(x, y, color, side, subgridIndex, shouldStore =
 
     doorColor = getColorName(colorCode);
 
-    console.log(`getColorName called with: "${colorCode}", Normalized: "${normalizedCode}"`);
+    //console.log(`getColorName called with: "${colorCode}", Normalized: "${normalizedCode}"`);
 
     // Add the new door data for the specified side
     doorData[side] = { x, y,  doorColor, side };
@@ -1100,14 +1126,14 @@ function receiveStateChange(pathNow,nodeName, newState, typeChange ) {
   if (pathNow.startsWith("doors")) {
     const subgridIndex = nodeName;  // Node name contains the subgrid index
 
-    console.log(`Updating doors for subgrid ${subgridIndex}`, newState);
+    //console.log(`Updating doors for subgrid ${subgridIndex}`, newState);
 
     // Loop over the doors stored under this subgrid
     for (const side in newState) {
       if (newState.hasOwnProperty(side)) {
         const doorData = newState[side];
 
-        console.log(`Rendering door for ${side}:`, doorData);
+        //console.log(`Rendering door for ${side}:`, doorData);
 
         // Render the door for each side of the subgrid
         if (typeChange === 'onChildAdded' || typeChange === 'onChildChanged') {
