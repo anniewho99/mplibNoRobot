@@ -240,7 +240,7 @@ let trapFlag = false;
 
 let totalRounds = 4;
 
-let trappedIndex;
+let trappedIndex = 1;
 
 function startNewRound() {
   console.log("Starting a new round...");
@@ -287,43 +287,29 @@ async function resetCoinsAndDoors() {
 
   // Step 1: Remove all current coins
   console.log("Removing all current coins...");
-  let currentCoins = Object.keys(coins);
-  currentCoins.forEach(coinKey => {
-      let path = `coins/${coinKey}`;
-      updateStateDirect(path, null);  // Remove coin from Firebase
-  });
+  let coinPath = `coins/`;
+  updateStateDirect(coinPath, null); 
   coins = {};  // Clear local coin state
 
-  // Step 2: Move all players to starting position
-  Object.keys(players).forEach(playerId => {
-      let player = players[playerId];
-      let startX = 1;
-      let startY = 1;
-      console.log(`Moving player ${playerId} to starting position...`);
+  // // Step 2: Move all players to starting position
 
-      // Update player's position to the starting coordinates (1,1)
-      let path = `players/${playerId}`;
-      let newState = {
-          ...player,
-          x: startX,
-          y: startY,
-          oldX: player.x,
-          oldY: player.y,
-      };
-      updateStateDirect(path, newState);
-  });
+  let player = players[playerId];
+  let startX = 1;
+  let startY = 1;
+  console.log(`Moving player ${playerId} to starting position...`);
 
-  // Step 3: Place new coins for this player
-  // Object.keys(players).forEach(playerId => {
-  //     console.log(`Placing new coins for player ${playerId}...`);
-  //     placeTokensForPlayer(playerId);  // Place new coins
-  // });
+  // Update player's position to the starting coordinates (1,1)
+
   placeTokensForPlayer(playerId);
 
-    let player = players[playerId];
+    // let player = players[playerId];
     let path = `players/${playerId}`;
     let newState = {
       ...player,
+      x: startX,
+      y: startY,
+      oldX: player.x,
+      oldY: player.y,
       isTrapped: false,
     };
     await updateStateDirect(path, newState);
