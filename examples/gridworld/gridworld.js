@@ -48,7 +48,7 @@ const studyId = 'gridworld';
 
 // Configuration setting for the session
 let sessionConfig = {
-    minPlayersNeeded: 2, // Minimum number of players needed; if set to 1, there is no waiting room (unless a countdown has been setup)
+    minPlayersNeeded: 4, // Minimum number of players needed; if set to 1, there is no waiting room (unless a countdown has been setup)
     maxPlayersNeeded: 4, // Maximum number of players allowed in a session
     maxParallelSessions: 0, // Maximum number of sessions in parallel (if zero, there are no limit)
     allowReplacements: true, // Allow replacing any players who leave an ongoing session?
@@ -70,12 +70,13 @@ let funList = {
       updateOngoingSession: updateOngoingSession,
       endSession: endSession
   },
+  evaluateUpdateFunction: evaluateUpdate,
   receiveStateChangeFunction: receiveStateChange,
   removePlayerStateFunction: removePlayerState
 };
 
 // List the node names where we place listeners for any changes to the children of these nodes; set to '' if listening to changes for children of the root
-let listenerPaths = ['coins', 'players', 'doors'];
+let listenerPaths = ['coins', 'players', 'doors', 'subgridAssignment'];
 
 // Set the session configuration for MPLIB
 initializeMPLIB( sessionConfig , studyId , funList, listenerPaths, verbosity );
@@ -226,7 +227,7 @@ let playerElements = {};
 let coins = {};
 let coinElements = {};
 let hasEnded = false;
-let roundTime = 20;  // 90 seconds per round
+let roundTime = 10;  // 90 seconds per round
 let breakTime = 5;   // 5-second break between rounds
 let roundInterval = null; // To store the round timer interval
 let isBreakTime = false; 
@@ -432,52 +433,115 @@ function isOccupied(x,y) {
 }
 
 
+// async function placeTokensForPlayer(playerId) {
+//   let player = players[playerId];
+//   if (!player) return;
+
+//   // Log player data for debugging
+//   // console.log(`Placing tokens for player ${playerId}. Player data:`, player);
+
+//   // Initialize or retrieve the current used subgrid for this player
+//   if (!player.currentSubgrid) {
+//     player.currentSubgrid = null;
+//   }
+
+//   // Collect all subgrids currently used by all players
+//   let allUsedSubgrids = Object.values(players)
+//     .map(p => (p.currentSubgrid != null) ? p.currentSubgrid - 1 : null); 
+//   // Log all used subgrids for debugging
+//   // console.log(`All used subgrids by players:`, allUsedSubgrids);
+
+//   // Filter out subgrids used by other players, but include the player's own subgrid
+//   let availableSubgrids = subgridPositions.filter((_, index) => 
+//     !allUsedSubgrids.includes(index)
+//   );
+
+//   // Log available subgrids for debugging
+//   // console.log(`Available subgrids for player ${playerId}:`, availableSubgrids);
+
+//   // Select a new subgrid randomly from the available ones
+//   let subgridIndex = Math.floor(Math.random() * availableSubgrids.length);
+//   let selectedSubgrid = availableSubgrids[subgridIndex];
+
+//   // Get the index of the selected subgrid to track it
+//   let subgridPositionIndex = subgridPositions.indexOf(selectedSubgrid);
+
+//   // Update the player's current subgrid in the database
+//   let path = `players/${playerId}`;
+//   let newState = {
+//     ...player,
+//     currentSubgrid: subgridPositionIndex + 1, // Store subgrid index with +1 offset
+//   };
+
+//   // Log the new subgrid for debugging
+//   // console.log(`Assigning new subgrid ${subgridPositionIndex} to player ${playerId}`);
+
+//   await updateStateDirect(path, newState);
+
+//   let placedPositions = new Set(); // Track placed positions to avoid overlaps
+
+//   // Place three coins within the selected subgrid
+//   for (let i = 0; i < 3;) {
+//     let x = Math.floor(Math.random() * (selectedSubgrid.xEnd - selectedSubgrid.xStart + 1)) + selectedSubgrid.xStart;
+//     let y = Math.floor(Math.random() * (selectedSubgrid.yEnd - selectedSubgrid.yStart + 1)) + selectedSubgrid.yStart;
+//     let positionKey = `${x},${y}`;
+
+//     // Ensure the position is not occupied and not already used
+//     if (!isOccupied(x, y) && !placedPositions.has(positionKey)) {
+//       let id = `coins/${getKeyString(x, y)}`;
+//       let newState = { x, y, color: player.color, id: playerId }; // Set the coin color to match the player
+
+//       updateStateDirect(id, newState); // Save the new state in Firebase
+//       //console.log(`Coin data written to ${id}:`, newState); 
+
+//       placedPositions.add(positionKey); // Mark this position as used
+//       i++; // Only increment after a successful placement
+//     }
+//   }
+
+//   // Log token placement for debugging
+//   //console.log(`Placed tokens for player ${playerId} in subgrid ${subgridPositionIndex}`);
+// }
+
 async function placeTokensForPlayer(playerId) {
   let player = players[playerId];
   if (!player) return;
 
   // Log player data for debugging
-  // console.log(`Placing tokens for player ${playerId}. Player data:`, player);
+  console.log(`Placing tokens for player ${playerId}. Player data:`, player);
 
-  // Initialize or retrieve the current used subgrid for this player
-  if (!player.currentSubgrid) {
-    player.currentSubgrid = null;
+  // Attempt to assign a subgrid using updateStateTransaction
+  const transactionSuccess = await updateStateTransaction('subgridAssignment', 'assignSubgrid', {
+      playerId: playerId,
+      subgrid: null  // Pass null, as the subgrid will be chosen inside evaluateUpdate
+  });
+
+  if (!transactionSuccess) {
+    console.error("Failed to assign a unique subgrid to the player.");
+    return;
   }
 
-  // Collect all subgrids currently used by all players
-  let allUsedSubgrids = Object.values(players)
-    .map(p => (p.currentSubgrid != null) ? p.currentSubgrid - 1 : null); 
-  // Log all used subgrids for debugging
-  // console.log(`All used subgrids by players:`, allUsedSubgrids);
+  // Fetch the subgridAssignment data from Firebase to determine the assigned subgrid
+  let subgridAssignments = await readState('subgridAssignment');
+  console.log('Retrieved subgridAssignments:', subgridAssignments); 
+  let assignedSubgrid = subgridAssignments[playerId];
 
-  // Filter out subgrids used by other players, but include the player's own subgrid
-  let availableSubgrids = subgridPositions.filter((_, index) => 
-    !allUsedSubgrids.includes(index)
-  );
+  if (!assignedSubgrid) {
+    console.error(`No subgrid assigned for player ${playerId}`);
+    return;
+  }
 
-  // Log available subgrids for debugging
-  // console.log(`Available subgrids for player ${playerId}:`, availableSubgrids);
+  console.log(`Player ${playerId} successfully assigned to subgrid ${assignedSubgrid}`);
 
-  // Select a new subgrid randomly from the available ones
-  let subgridIndex = Math.floor(Math.random() * availableSubgrids.length);
-  let selectedSubgrid = availableSubgrids[subgridIndex];
+  // Now place tokens for the player in the assigned subgrid
+  await placeTokensInSubgrid(playerId, assignedSubgrid);
+}
 
-  // Get the index of the selected subgrid to track it
-  let subgridPositionIndex = subgridPositions.indexOf(selectedSubgrid);
+async function placeTokensInSubgrid(playerId, subgridId) {
+  let selectedSubgrid = subgridPositions[subgridId - 1];  // Get the selected subgrid
+  let placedPositions = new Set();  // Track placed positions to avoid overlaps
 
-  // Update the player's current subgrid in the database
-  let path = `players/${playerId}`;
-  let newState = {
-    ...player,
-    currentSubgrid: subgridPositionIndex + 1, // Store subgrid index with +1 offset
-  };
-
-  // Log the new subgrid for debugging
-  // console.log(`Assigning new subgrid ${subgridPositionIndex} to player ${playerId}`);
-
-  await updateStateDirect(path, newState);
-
-  let placedPositions = new Set(); // Track placed positions to avoid overlaps
+  console.log(`Placing tokens for player ${playerId} in subgrid ${subgridId}`);
 
   // Place three coins within the selected subgrid
   for (let i = 0; i < 3;) {
@@ -488,18 +552,15 @@ async function placeTokensForPlayer(playerId) {
     // Ensure the position is not occupied and not already used
     if (!isOccupied(x, y) && !placedPositions.has(positionKey)) {
       let id = `coins/${getKeyString(x, y)}`;
-      let newState = { x, y, color: player.color, id: playerId }; // Set the coin color to match the player
+      let newState = { x, y, color: players[playerId].color, id: playerId };  // Set coin color to match player
 
-      updateStateDirect(id, newState); // Save the new state in Firebase
-      //console.log(`Coin data written to ${id}:`, newState); 
+      await updateStateDirect(id, newState);  // Save new state in Firebase
+      console.log(`Coin placed at (${x}, ${y}) for player ${playerId}`);
 
-      placedPositions.add(positionKey); // Mark this position as used
-      i++; // Only increment after a successful placement
+      placedPositions.add(positionKey);  // Mark this position as used
+      i++;  // Only increment after successful placement
     }
   }
-
-  // Log token placement for debugging
-  //console.log(`Placed tokens for player ${playerId} in subgrid ${subgridPositionIndex}`);
 }
 
 async function handleCoinCollection(playerId) {
@@ -1171,20 +1232,89 @@ function receiveStateChange(pathNow,nodeName, newState, typeChange ) {
       }
     }
   }
+
+  if (pathNow === 'subgridAssignment') {
+    console.log('Updated subgrid assignments:', newState);
+
+    // Directly handle updates to subgridAssignment
+    for (const playerId in newState) {
+      if (newState.hasOwnProperty(playerId)) {
+        const assignedSubgrid = newState[playerId];
+        console.log(`Player ${playerId} is now assigned to subgrid ${assignedSubgrid}`);
+
+        // Insert any game logic you need here based on the new subgrid assignments
+        // For example, updating UI, moving elements, or changing game state
+      }
+    }
+  }
+
 }
 
 // Function triggered by a call to "updateStateTransaction" to evaluate if the proposed action is valid
 // If "updateStateTransaction" is not called, and all updates are done through "updateStateDirect", there is no 
 // need for this function
-function evaluateUpdate( path, state, action, actionArgs ) {
+function evaluateUpdate(path, state, action, actionArgs) {
+  console.log(`evaluateUpdate called with path: ${path}, state:`, state, `action: ${action}, actionArgs:`, actionArgs);
   let isAllowed = false;
   let newState = null;
 
-  // .... insert your code to update isAllowed and newState
+  // Check the action type to ensure it matches what we want to handle
+  if (action === "assignSubgrid") {
+    const { playerId, subgrid } = actionArgs;
 
+    // Initialize subgridAssignments if it doesn't exist yet
+    let subgridAssignments = state || {};
+
+    // If the subgrid is null, find the first available subgrid
+    let chosenSubgrid = subgrid;
+    if (subgrid === null) {
+      console.log(`No specific subgrid provided. Choosing the first available subgrid.`);
+      chosenSubgrid = getRandomAvailableSubgrid(subgridAssignments);
+    }
+
+    if (chosenSubgrid === null) {
+      console.error("No available subgrid for assignment.");
+    } else if (!Object.values(subgridAssignments).includes(chosenSubgrid)) {
+      // The chosen subgrid is available, proceed with assignment
+      subgridAssignments[playerId] = chosenSubgrid;
+
+      // Update the state with the new assignments
+      newState = subgridAssignments;
+      isAllowed = true;  // The transaction is successful
+      console.log(`Assigned subgrid ${chosenSubgrid} to player ${playerId}`);
+    } else {
+      console.log(`Subgrid ${chosenSubgrid} is already taken.`);
+    }
+  }
+
+  // Construct and return the result of the evaluation
   let evaluationResult = { isAllowed, newState };
   return evaluationResult;
 }
+
+
+// Helper function to find the first available subgrid
+function getRandomAvailableSubgrid(subgridAssignments) {
+  // Collect all available subgrids
+  let availableSubgrids = [];
+  
+  for (let i = 0; i < subgridPositions.length; i++) {
+    // Use 1-based indexing, so add 1 to the index check
+    if (!Object.values(subgridAssignments).includes(i + 1)) {
+      availableSubgrids.push(i + 1);  // Collect the available subgrid
+    }
+  }
+
+  // Randomly select one from the available subgrids
+  if (availableSubgrids.length > 0) {
+    let randomIndex = Math.floor(Math.random() * availableSubgrids.length);
+    return availableSubgrids[randomIndex];
+  }
+
+  return null;  // Return null if no subgrid is available
+}
+
+
 
 // Function triggered when this client closes the window and the player needs to be removed from the state 
 function removePlayerState() {
