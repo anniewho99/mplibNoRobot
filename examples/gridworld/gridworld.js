@@ -179,7 +179,7 @@ const playerColors = ["blue", "red", "yellow", "purple"];
 
 function getColorName(colorCode) {
   const normalizedCode = colorCode.trim().toLowerCase();  // Normalize input
-  //console.log(`getColorName called with: "${colorCode}", Normalized: "${normalizedCode}"`);
+  console.log(`getColorName called with: "${colorCode}", Normalized: "${normalizedCode}"`);
 
   if(normalizedCode ===  "#00ccff"){
     //console.log('Match found: blue');
@@ -187,7 +187,7 @@ function getColorName(colorCode) {
   }else if(normalizedCode === "#9370db"){
     //console.log('Match found: purple');
     return "purple";
-  }else if(normalizedCode === "#FF746C"){
+  }else if(normalizedCode === "#ff746c"){
     //console.log('Match found: purple');
     return "red";
   }else{
@@ -213,7 +213,7 @@ function getColorCode(colorName) {
       code = "yellow";  // Example if stored as a string name
       break;
     case "red":
-      code = "#FF746C";  // Example if stored as a string name
+      code = "#ff746c";  // Example if stored as a string name
       break;
     default:
       code = colorName;  // Return original name if no match found
