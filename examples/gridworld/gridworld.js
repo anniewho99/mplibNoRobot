@@ -48,8 +48,8 @@ const studyId = 'gridworld';
 
 // Configuration setting for the session
 let sessionConfig = {
-    minPlayersNeeded: 4, // Minimum number of players needed; if set to 1, there is no waiting room (unless a countdown has been setup)
-    maxPlayersNeeded: 4, // Maximum number of players allowed in a session
+    minPlayersNeeded: 2, // Minimum number of players needed; if set to 1, there is no waiting room (unless a countdown has been setup)
+    maxPlayersNeeded: 2, // Maximum number of players allowed in a session
     maxParallelSessions: 0, // Maximum number of sessions in parallel (if zero, there are no limit)
     allowReplacements: true, // Allow replacing any players who leave an ongoing session?
     exitDelayWaitingRoom: 0, // Number of countdown seconds before leaving waiting room (if zero, player leaves waiting room immediately)
@@ -168,14 +168,14 @@ subgridPositions.forEach(grid => {  // Use subgridPositions instead of GRIDS
 forbidden_moves = Array.from(new Set(forbidden_moves));
 
 // Options for Player Colors... these are in the same order as our sprite sheet
-const playerColors = ["blue", "orange", "yellow", "purple"];
+const playerColors = ["blue", "red", "yellow", "purple"];
 
-const colorMap = {
-  "#00ccff": "blue",
-  "#9370db": "purple",
-  "yellow": "yellow",
-  "orange": "orange"
-};
+// const colorMap = {
+//   "#00ccff": "blue",
+//   "#9370db": "purple",
+//   "yellow": "yellow",
+//   "orange": "orange"
+// };
 
 function getColorName(colorCode) {
   const normalizedCode = colorCode.trim().toLowerCase();  // Normalize input
@@ -187,6 +187,9 @@ function getColorName(colorCode) {
   }else if(normalizedCode === "#9370db"){
     //console.log('Match found: purple');
     return "purple";
+  }else if(normalizedCode === "#FF746C"){
+    //console.log('Match found: purple');
+    return "red";
   }else{
     return colorCode; 
   }
@@ -209,8 +212,8 @@ function getColorCode(colorName) {
     case "yellow":
       code = "yellow";  // Example if stored as a string name
       break;
-    case "orange":
-      code = "orange";  // Example if stored as a string name
+    case "red":
+      code = "#FF746C";  // Example if stored as a string name
       break;
     default:
       code = colorName;  // Return original name if no match found
@@ -730,8 +733,8 @@ function getFilterForColor(color) {
   switch (color) {
     case 'blue':
       return 'sepia(1) saturate(4000%) hue-rotate(150deg) brightness(1) contrast(2)'; // Blue filter
-    case 'orange':
-      return 'sepia(1) saturate(5000%) hue-rotate(293deg) brightness(0.9) contrast(1.6)';  // Orange filter
+    case 'red':
+      return 'sepia(1) saturate(5000%) hue-rotate(293deg) brightness(0.9) contrast(1.6)';  // Red filter
     case 'yellow':
       return 'sepia(1) saturate(4000%) hue-rotate(2deg) brightness(1.2) contrast(1.1)'; // yellow filter
     case 'purple':
@@ -857,7 +860,7 @@ async function shuffleAndRedrawDoors(subgridIndex) {
       { x: subgrid.xEnd, y: (subgrid.yStart + subgrid.yEnd) / 2, side: 'right' }
     ];
 
-    let doorColors = ['yellow', 'orange', '#00CCFF', '#9370DB'];  // Example colors
+    let doorColors = ['yellow', '#FF746C', '#00CCFF', '#9370DB'];  // Example colors
     let shuffledColors = shuffle(doorColors);  // Shuffle the colors
 
     // Update the shuffled doors in Firebase
@@ -985,7 +988,7 @@ async function placeDoorsForSubgrid(subgridIndex) {
     { x: subgrid.xEnd, y: (subgrid.yStart + subgrid.yEnd) / 2, side: 'right' }     // Right Door
   ];
 
-  let doorColors = ['yellow', 'orange', '#00CCFF', '#9370DB'];  // Example colors
+  let doorColors = ['yellow', '#FF746C', '#00CCFF', '#9370DB'];  // Example colors
   let shuffledColors = shuffle(doorColors);
 
    // Check if the doors are already stored in Firebase
@@ -1047,7 +1050,7 @@ async function initGame() {
             color = "blue";
             break;
         case 2:
-            color = "orange";
+            color = "red";
             break;
         case 3:
             color = "yellow";
