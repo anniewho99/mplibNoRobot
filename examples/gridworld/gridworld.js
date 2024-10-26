@@ -250,6 +250,7 @@ function startNewRound() {
   //messageGame.innerText = "Round Started! Collect coins!";
 
   currentRound = currentRound + 1;
+  trapFlag  = false;
 
   if (currentRound <= totalRounds) {
     roundInterval = setTimeout(endRound, roundTime * 1000);  // End the round after 90 seconds
