@@ -230,7 +230,7 @@ let playerElements = {};
 let coins = {};
 let coinElements = {};
 let hasEnded = false;
-let roundTime = 10;  // 90 seconds per round
+let roundTime = 20;  // 90 seconds per round
 let breakTime = 5;   // 5-second break between rounds
 let roundInterval = null; // To store the round timer interval
 let isBreakTime = false; 
@@ -245,6 +245,8 @@ let trapFlag = false;
 let totalRounds = 4;
 
 let trappedIndex = 1;
+
+let trappedPlayer;
 
 function startNewRound() {
   console.log("Starting a new round...");
@@ -332,6 +334,8 @@ async function resetCoinsAndDoors() {
   // Step 4: Reset doors
   console.log("Resetting doors for all subgrids...");
   await shuffleAndRedrawDoors(trappedIndex);
+  trappedIndex = 1;
+  trappedPlayer = null;
   placeDoorsForAllSubgrids();  // Place new doors
 }
 
@@ -838,8 +842,41 @@ async function getDoorAtPosition(x, y, playerColor, playerId) {
                 renderDoor(doorX, doorY, "grey", side, subgridIndex); 
                 trapFlag = 'used';
                 trappedIndex = subgridIndex;
+                trappedPlayer = playerId;
+                let updateIndex = Number(trappedIndex) + 1;
+                await updateStateDirect('subgridAssignment/trapped', updateIndex);
+
+                console.log(`Subgrid ${subgridIndex + 1} is now marked as trapped.`);
+
               }else{
                 console.log(`Main entry detected at door (${doorX}, ${doorY}). Shuffling doors for subgrid ${subgridIndex}.`);
+                if(trapFlag === true){
+                  trappedIndex = await readState("subgridAssignment/trapped");
+                  trappedIndex = Number(trappedIndex) - 1;
+                  if(trappedIndex){
+                    trapFlag = 'used';
+                    let players = await readState('players')
+                    Object.keys(players).forEach(playerId => {
+                      const player = players[playerId];
+                    
+                      if (player.isTrapped) {
+                        console.log(`Player ${playerId} is trapped.`);
+                        trappedPlayer = playerId;
+                      }
+                    });
+                  }
+                }
+                if (Number(subgridIndex) ===  Number(trappedIndex) && trapFlag === 'used') {
+                  console.log(`Conditions met for freeing subgrid ${subgridIndex + 1}.`);
+                  let subgridAssignments = await readState('subgridAssignment');
+                  delete subgridAssignments['trapped'];
+                  let path = `players/${trappedPlayer}/isTrapped`;
+                  await updateStateDirect(path, false);
+
+                  console.log(`Deleted 'trapped' entry from subgridAssignment.`);
+                  trapFlag = false;
+                  }
+             
                 await shuffleAndRedrawDoors(subgridIndex);
               }
 
