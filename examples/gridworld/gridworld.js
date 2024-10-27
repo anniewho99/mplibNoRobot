@@ -292,8 +292,17 @@ async function resetCoinsAndDoors() {
 
   // Step 1: Remove all current coins
   console.log("Removing all current coins...");
-  let coinPath = `coins/`;
-  updateStateDirect(coinPath, null); 
+   // Fetch all current coins
+  let allCoins = await readState('coins');
+
+  // Iterate over all coins and remove those that belong to the current player
+  for (let coinKey in allCoins) {
+    if (allCoins[coinKey].id === playerId) {
+      let coinPath = `coins/${coinKey}`;
+      await updateStateDirect(coinPath, null);  // Remove only coins with the matching player ID
+    }
+  }
+  
   coins = {};  // Clear local coin state
 
   // // Step 2: Move all players to starting position
@@ -315,6 +324,7 @@ async function resetCoinsAndDoors() {
       y: startY,
       oldX: player.x,
       oldY: player.y,
+      coins: 0,
       isTrapped: false,
     };
     await updateStateDirect(path, newState);
@@ -581,7 +591,7 @@ async function handleCoinCollection(playerId) {
   // Check if all coins for this player are removed
   if (playerCoins.length === 0) {
     // Log that all coins are collected
-    //console.log(`All coins collected for player ${playerId}. Placing a new group.`);
+    console.log(`All coins collected for player ${playerId}. Placing a new group.`);
 
     // Place a new group of three coins
     await placeTokensForPlayer(playerId);
