@@ -230,7 +230,7 @@ let playerElements = {};
 let coins = {};
 let coinElements = {};
 let hasEnded = false;
-let roundTime = 20;  // 90 seconds per round
+let roundTime = 100;  // 90 seconds per round
 let breakTime = 5;   // 5-second break between rounds
 let roundInterval = null; // To store the round timer interval
 let isBreakTime = false; 
@@ -870,9 +870,10 @@ async function getDoorAtPosition(x, y, playerColor, playerId) {
                   console.log(`Conditions met for freeing subgrid ${subgridIndex + 1}.`);
                   let subgridAssignments = await readState('subgridAssignment');
                   delete subgridAssignments['trapped'];
-                  let path = `players/${trappedPlayer}/isTrapped`;
-                  await updateStateDirect(path, false);
-
+                  // Use update() if you want to update a specific field
+                  await updateStateDirect(`players/${trappedPlayer}`, {
+                  isTrapped: false
+                  });
                   console.log(`Deleted 'trapped' entry from subgridAssignment.`);
                   trapFlag = false;
                   }
