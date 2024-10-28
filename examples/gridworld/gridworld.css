@@ -309,3 +309,54 @@ button:active {
   font-size: 18px;
   color: white;
 }
+
+/* Player Information Sidebar */
+.player-info-panel {
+  position: absolute;
+  top: 10px;           /* Adjust based on your layout */
+  right: 20px;         /* Adjust based on your layout */
+  width: 300px;        /* Width of the panel */
+  /*background-color: #5aaeed; /* Light background */
+  padding: 15px;
+  border-radius: 10px;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+  font-family: Arial, sans-serif;
+}
+
+.player-info-panel h2 {
+  font-size: 16px;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+#player-list {
+  list-style-type: none; /* Remove default bullets */
+  padding: 0;
+  margin: 0;
+}
+
+.player-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+  padding: 5px;
+  border-bottom: 1px solid #ddd;
+}
+
+.player-avatar {
+  width: 14px; /* Match the size of your avatar */
+  height: 14px; /* Match the size of your avatar */
+  margin-right: 10px;
+  image-rendering: pixelated;
+}
+
+.player-name {
+  font-weight: bold;
+  margin-right: auto;
+}
+
+.player-coins {
+  color: gold;
+  font-weight: bold;
+  margin-left: 10px;
+}

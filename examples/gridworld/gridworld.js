@@ -48,8 +48,8 @@ const studyId = 'gridworld';
 
 // Configuration setting for the session
 let sessionConfig = {
-    minPlayersNeeded: 2, // Minimum number of players needed; if set to 1, there is no waiting room (unless a countdown has been setup)
-    maxPlayersNeeded: 2, // Maximum number of players allowed in a session
+    minPlayersNeeded: 4, // Minimum number of players needed; if set to 1, there is no waiting room (unless a countdown has been setup)
+    maxPlayersNeeded: 4, // Maximum number of players allowed in a session
     maxParallelSessions: 0, // Maximum number of sessions in parallel (if zero, there are no limit)
     allowReplacements: true, // Allow replacing any players who leave an ongoing session?
     exitDelayWaitingRoom: 0, // Number of countdown seconds before leaving waiting room (if zero, player leaves waiting room immediately)
@@ -337,6 +337,7 @@ async function resetCoinsAndDoors() {
   trappedIndex = 1;
   trappedPlayer = null;
   placeDoorsForAllSubgrids();  // Place new doors
+  fetchAndPopulatePlayerInfo();
 }
 
 async function initRounds() {
@@ -410,6 +411,76 @@ let arrowRightListener = new KeyPressListener("ArrowRight", () => handleArrowPre
 //       Game Specific Code
 // -------------------------------------
 //Misc Helpers
+// Function to fetch all player data and update the player list
+async function fetchAndPopulatePlayerInfo() {
+  try {
+    // Assume you have a readState function that fetches all players' data from Firebase
+    const allPlayersData = await readState('players'); // Adjust the path if necessary
+
+    // Convert the data into an array of players
+    const playersArray = Object.keys(allPlayersData).map(playerId => {
+      const player = allPlayersData[playerId];
+      return {
+        id: playerId,
+        name: player.name || `Player ${playerId}`, // Fallback to 'Player {ID}' if name is missing
+        color: player.color,
+        coins: player.coins || 0 // Fallback to 0 if coins are not defined
+      };
+    });
+
+    // Call the updatePlayerList function to populate the player information
+    updatePlayerList(playersArray);
+
+  } catch (error) {
+    console.error('Failed to fetch player data:', error);
+  }
+}
+
+// Function to update the player list dynamically
+function updatePlayerList(players) {
+  const playerList = document.getElementById('player-list');
+  playerList.innerHTML = ''; // Clear the current list
+
+  players.forEach(player => {
+    // Create a list item for each player
+    const playerItem = document.createElement('li');
+    playerItem.classList.add('player-item');
+
+    // Create avatar
+    const avatar = document.createElement('div');
+    avatar.classList.add('player-avatar', 'Character_sprite');
+    avatar.style.backgroundPositionY = getPlayerBackgroundPosition(player.color);
+    playerItem.appendChild(avatar);
+
+    // Create player name
+    const playerName = document.createElement('span');
+    playerName.classList.add('player-name');
+    playerName.textContent = player.name;
+    playerItem.appendChild(playerName);
+
+    // Create coin count
+    const playerCoins = document.createElement('span');
+    playerCoins.classList.add('player-coins');
+    playerCoins.textContent = `Coins: ${player.coins}`;
+    playerItem.appendChild(playerCoins);
+
+    // Add player item to the list
+    playerList.appendChild(playerItem);
+  });
+}
+
+// Helper function to get the background position for each color
+function getPlayerBackgroundPosition(color) {
+  switch (color) {
+    case 'red': return '-16px';
+    case 'blue': return '0px';
+    case 'yellow': return '-48px';
+    case 'purple': return '-80px';
+    // Add more colors if needed
+    default: return '0px';
+  }
+}
+
 function randomFromArray(array) {
   return array[Math.floor(Math.random() * array.length)];
 }
@@ -714,33 +785,34 @@ async function handleArrowPress(xChange = 0, yChange = 0) {
       isTrapped: players[playerId].isTrapped,
     };
     updateStateDirect(path, newState);
+    fetchAndPopulatePlayerInfo();
   }
 }
 
 
-async function assignUniqueColor() {
-  // Fetch all current players from the Firebase database
-  let players = await readState('players');
-  let usedColors = new Set();
+// async function assignUniqueColor() {
+//   // Fetch all current players from the Firebase database
+//   let players = await readState('players');
+//   let usedColors = new Set();
 
-  // Collect all colors that are currently being used
-  if (players !== null) {
-    Object.values(players).forEach(player => {
-      if (player.color) {
-        usedColors.add(player.color);
-      }
-    });
-  }
+//   // Collect all colors that are currently being used
+//   if (players !== null) {
+//     Object.values(players).forEach(player => {
+//       if (player.color) {
+//         usedColors.add(player.color);
+//       }
+//     });
+//   }
 
-  // Find the first available color that isn't used
-  let availableColor = playerColors.find(color => !usedColors.has(color));
-  if (!availableColor) {
-    console.error('No available colors left for players!');
-    return null;
-  }
+//   // Find the first available color that isn't used
+//   let availableColor = playerColors.find(color => !usedColors.has(color));
+//   if (!availableColor) {
+//     console.error('No available colors left for players!');
+//     return null;
+//   }
 
-  return availableColor;
-}
+//   return availableColor;
+// }
 
 // Helper function to determine the correct filter value based on the color
 function getFilterForColor(color) {
