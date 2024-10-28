@@ -116,6 +116,7 @@ button:active {
   caret-color: transparent;
   overflow: hidden;
   top: -3px;
+  transform: scale(0.875) translateY(3px);
   background: url(./images/characters.png);
 }
 .Character[data-direction="right"] .Character_sprite {
@@ -140,6 +141,7 @@ button:active {
 }
 .Character_shadow {
   caret-color: transparent;
+  transform: scale(0.875) translateY(3px);
   background: url(./images/shadow.png) no-repeat no-repeat;
 }
 
