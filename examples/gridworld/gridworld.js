@@ -234,6 +234,8 @@ let roundTime = 100;  // 90 seconds per round
 let breakTime = 5;   // 5-second break between rounds
 let roundInterval = null; // To store the round timer interval
 let isBreakTime = false; 
+let timeLeft = roundTime;
+let timerInterval;
 
 let introColor;
 let introName;
@@ -247,6 +249,33 @@ let totalRounds = 4;
 let trappedIndex = 1;
 
 let trappedPlayer;
+
+// Function to start the round timer
+function startRoundTimer() {
+  timeLeft = roundTime; // Reset the time left at the beginning of each round
+  updateTimerDisplay(timeLeft); // Initial display update
+
+  // Clear any existing timer interval to avoid duplicates
+  if (timerInterval) clearInterval(timerInterval);
+
+  // Start a new timer interval
+  timerInterval = setInterval(() => {
+    timeLeft--; // Decrease the time left by 1 second
+    updateTimerDisplay(timeLeft);
+
+    if (timeLeft <= 0) {
+      clearInterval(timerInterval); // Stop the timer when time is up
+    }
+  }, 1000); // Update every second
+}
+
+// Function to update the timer display
+function updateTimerDisplay(seconds) {
+  const timerElement = document.getElementById("round-timer");
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  timerElement.textContent = `Time Left: ${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
+}
 
 function startNewRound() {
   console.log("Starting a new round...");
@@ -338,6 +367,7 @@ async function resetCoinsAndDoors() {
   trappedPlayer = null;
   placeDoorsForAllSubgrids();  // Place new doors
   fetchAndPopulatePlayerInfo();
+  startRoundTimer(); 
 }
 
 async function initRounds() {

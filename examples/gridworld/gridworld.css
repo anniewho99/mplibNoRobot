@@ -360,3 +360,22 @@ button:active {
   font-weight: bold;
   margin-left: 10px;
 }
+
+/* Timer Display Styling */
+.timer-container {
+  position: absolute;
+  top: 10px;
+  left: 20px; /* Adjust position to your preference */
+  font-size: 20px;
+  font-weight: bold;
+  color: #ff6347; /* A bright color to stand out */
+  background-color: rgba(0, 0, 0, 0.7); /* Semi-transparent background */
+  padding: 10px;
+  border-radius: 8px;
+  z-index: 10; /* Ensure it appears above other elements */
+}
+
+#round-timer {
+  color: #ffffff; /* White text for visibility */
+}
+
