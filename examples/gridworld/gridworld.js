@@ -1160,17 +1160,17 @@ function receiveStateChange(pathNow,nodeName, newState, typeChange ) {
       characterElement.innerHTML = (`
         <div class="Character_shadow grid-cell"></div>
         <div class="Character_sprite grid-cell"></div>
-        <div class="Character_name-container">
-          <span class="Character_name"></span>
-          <span class="Character_coins">0</span>
-        </div>
       `);
 
+    //   <div class="Character_name-container">
+    //   <span class="Character_name"></span>
+    //   <span class="Character_coins">0</span>
+    // </div>
       playerElements[addedPlayer.id] = characterElement;
 
       //Fill in some initial state
-      characterElement.querySelector(".Character_name").innerText = addedPlayer.name;
-      characterElement.querySelector(".Character_coins").innerText = addedPlayer.coins;
+      // characterElement.querySelector(".Character_name").innerText = addedPlayer.name;
+      // characterElement.querySelector(".Character_coins").innerText = addedPlayer.coins;
       characterElement.setAttribute("data-color", addedPlayer.color);
       characterElement.setAttribute("data-direction", addedPlayer.direction);
       const left = 16 * (addedPlayer.x-1) + "px";
@@ -1191,8 +1191,8 @@ function receiveStateChange(pathNow,nodeName, newState, typeChange ) {
       const characterState = changedPlayer;
       let el = playerElements[changedPlayer.id];
       // Now update the DOM
-      el.querySelector(".Character_name").innerText = characterState.name;
-      el.querySelector(".Character_coins").innerText = characterState.coins;
+      // el.querySelector(".Character_name").innerText = characterState.name;
+      // el.querySelector(".Character_coins").innerText = characterState.coins;
       el.setAttribute("data-color", characterState.color);
       el.setAttribute("data-direction", characterState.direction);
       const left = 16 * (characterState.x-1) + "px";

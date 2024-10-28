@@ -145,7 +145,7 @@ button:active {
   background: url(./images/shadow.png) no-repeat no-repeat;
 }
 
-.Character_name-container {
+/* .Character_name-container {
   caret-color: transparent;
   position: absolute;
   top: -10px;
@@ -162,7 +162,7 @@ button:active {
 .Character_coins {
   margin-left: 1px;
   color: gold;
-}
+} */
 
 /* Coins */
 .Coin_sprite {
