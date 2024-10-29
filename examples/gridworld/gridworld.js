@@ -230,7 +230,7 @@ let playerElements = {};
 let coins = {};
 let coinElements = {};
 let hasEnded = false;
-let roundTime = 100;  // 90 seconds per round
+let roundTime = 90;  // 90 seconds per round
 let breakTime = 5;   // 5-second break between rounds
 let roundInterval = null; // To store the round timer interval
 let isBreakTime = false; 
@@ -241,7 +241,7 @@ let introColor;
 let introName;
 
 let currentRound = 0;
-let trapTime = 10; 
+let trapTime = 30; 
 let trapFlag = false;
 
 let totalRounds = 4;
@@ -850,11 +850,11 @@ function getFilterForColor(color) {
     case 'blue':
       return 'sepia(1) saturate(4000%) hue-rotate(150deg) brightness(1) contrast(2)'; // Blue filter
     case 'red':
-      return 'sepia(1) saturate(5000%) hue-rotate(293deg) brightness(0.9) contrast(1.6)';  // Red filter
+      return 'sepia(1) saturate(5000%) hue-rotate(293deg) brightness(0.8) contrast(1.8)';  // Red filter
     case 'yellow':
       return 'sepia(1) saturate(4000%) hue-rotate(2deg) brightness(1.2) contrast(1.1)'; // yellow filter
     case 'purple':
-      return 'sepia(1) saturate(5000%) hue-rotate(182deg) brightness(0.8) contrast(1.1)'; // Purple filter
+      return 'sepia(1) saturate(27000%) hue-rotate(183deg) brightness(0.63) contrast(2.3)';  // Filter for #8563e0
   }
 }
 
