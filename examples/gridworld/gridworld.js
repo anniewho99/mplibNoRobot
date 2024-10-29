@@ -36,7 +36,7 @@ let instructionsScreen = document.getElementById('instructionsScreen');
 let waitingRoomScreen = document.getElementById('waitingRoomScreen');
 let gameScreen = document.getElementById('gameScreen');
 let messageWaitingRoom = document.getElementById('messageWaitingRoom');
-let messageGame = document.getElementById('messageGame');
+// let messageGame = document.getElementById('messageGame');
 let messageFinish = document.getElementById('messageFinish');
 let gameContainer = document.querySelector(".game-container");
 
@@ -48,8 +48,8 @@ const studyId = 'gridworld';
 
 // Configuration setting for the session
 let sessionConfig = {
-    minPlayersNeeded: 4, // Minimum number of players needed; if set to 1, there is no waiting room (unless a countdown has been setup)
-    maxPlayersNeeded: 4, // Maximum number of players allowed in a session
+    minPlayersNeeded: 2, // Minimum number of players needed; if set to 1, there is no waiting room (unless a countdown has been setup)
+    maxPlayersNeeded: 2, // Maximum number of players allowed in a session
     maxParallelSessions: 0, // Maximum number of sessions in parallel (if zero, there are no limit)
     allowReplacements: true, // Allow replacing any players who leave an ongoing session?
     exitDelayWaitingRoom: 0, // Number of countdown seconds before leaving waiting room (if zero, player leaves waiting room immediately)
@@ -388,16 +388,16 @@ async function initRounds() {
 // -------------------------------------
 // Buttons
 let joinButton = document.getElementById('joinBtn');
-let leaveButton = document.getElementById('leaveBtn');
+// let leaveButton = document.getElementById('leaveBtn');
 
 // Add event listeners to the buttons
 joinButton.addEventListener('click', function () {
     joinSession(); // call the library function to attempt to join a session, this results either in starting a session directly or starting a waiting room
 });
 
-leaveButton.addEventListener('click', function () {
-    leaveSession(); // call the library function to leave a session. This then triggers the local function endSession
-});
+// leaveButton.addEventListener('click', function () {
+//     leaveSession(); // call the library function to leave a session. This then triggers the local function endSession
+// });
 
 class KeyPressListener {
   constructor(keyCode, callback) {
@@ -445,31 +445,45 @@ let arrowRightListener = new KeyPressListener("ArrowRight", () => handleArrowPre
 async function fetchAndPopulatePlayerInfo() {
   try {
     // Assume you have a readState function that fetches all players' data from Firebase
-    const allPlayersData = await readState('players'); // Adjust the path if necessary
+    const allPlayersData = await readState('players');
 
-    // Convert the data into an array of players
-    const playersArray = Object.keys(allPlayersData).map(playerId => {
+    // Get the current player's ID and data
+    const currentPlayerId = getCurrentPlayerId();
+    const currentPlayerData = allPlayersData[currentPlayerId];
+    const introColor = currentPlayerData.color; // Get the color for the current player
+
+    // Create the intro message
+    const introMessage = `You can only collect ${introColor} tokens and go through ${introColor} doors\n        `;
+
+    // Update the player info panel with the message
+    updatePlayerList(Object.keys(allPlayersData).map(playerId => {
       const player = allPlayersData[playerId];
       return {
         id: playerId,
-        name: player.name || `Player ${playerId}`, // Fallback to 'Player {ID}' if name is missing
+        name: player.name || `Player ${playerId}`,
         color: player.color,
-        coins: player.coins || 0 // Fallback to 0 if coins are not defined
+        coins: player.coins || 0
       };
-    });
-
-    // Call the updatePlayerList function to populate the player information
-    updatePlayerList(playersArray);
+    }), introMessage);
 
   } catch (error) {
     console.error('Failed to fetch player data:', error);
   }
 }
 
-// Function to update the player list dynamically
-function updatePlayerList(players) {
+// Updated updatePlayerList function to accept an intro message
+function updatePlayerList(players, introMessage) {
   const playerList = document.getElementById('player-list');
   playerList.innerHTML = ''; // Clear the current list
+
+  // Add the intro message at the top of the player list
+  const introMessageElement = document.createElement('div');
+  introMessageElement.classList.add('intro-message');
+  introMessageElement.textContent = introMessage;
+  playerList.appendChild(introMessageElement);
+
+  // Get the current player's ID
+  const currentPlayerId = getCurrentPlayerId();
 
   players.forEach(player => {
     // Create a list item for each player
@@ -477,15 +491,29 @@ function updatePlayerList(players) {
     playerItem.classList.add('player-item');
 
     // Create avatar
+    const avatarContainer = document.createElement('div');
+    avatarContainer.classList.add('player-avatar-container');
+
     const avatar = document.createElement('div');
     avatar.classList.add('player-avatar', 'Character_sprite');
     avatar.style.backgroundPositionY = getPlayerBackgroundPosition(player.color);
-    playerItem.appendChild(avatar);
+    avatarContainer.appendChild(avatar);
+    playerItem.appendChild(avatarContainer);
 
     // Create player name
     const playerName = document.createElement('span');
     playerName.classList.add('player-name');
     playerName.textContent = player.name;
+
+    // Add "(You)" and color only for the current player
+    if (player.id === currentPlayerId) {
+      const youLabel = document.createElement('span');
+      youLabel.classList.add('you-label');
+      youLabel.textContent = ' (You)';
+      playerName.style.color = introColor; // Set color only for the current player
+      playerName.appendChild(youLabel);
+    }
+
     playerItem.appendChild(playerName);
 
     // Create coin count
@@ -498,6 +526,7 @@ function updatePlayerList(players) {
     playerList.appendChild(playerItem);
   });
 }
+
 
 // Helper function to get the background position for each color
 function getPlayerBackgroundPosition(color) {
@@ -1213,9 +1242,9 @@ async function initGame() {
     }
 
  
-    // Show the player name
-    let str = `You are: ${name}`;
-    messageGame.innerHTML = str;
+    // // Show the player name
+    // let str = `You are: ${name}`;
+    // messageGame.innerHTML = str;
     
     const {x, y} = { x: 1, y: 1 }; 
 
