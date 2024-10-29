@@ -48,8 +48,8 @@ const studyId = 'gridworld';
 
 // Configuration setting for the session
 let sessionConfig = {
-    minPlayersNeeded: 2, // Minimum number of players needed; if set to 1, there is no waiting room (unless a countdown has been setup)
-    maxPlayersNeeded: 2, // Maximum number of players allowed in a session
+    minPlayersNeeded: 4, // Minimum number of players needed; if set to 1, there is no waiting room (unless a countdown has been setup)
+    maxPlayersNeeded: 4, // Maximum number of players allowed in a session
     maxParallelSessions: 0, // Maximum number of sessions in parallel (if zero, there are no limit)
     allowReplacements: true, // Allow replacing any players who leave an ongoing session?
     exitDelayWaitingRoom: 0, // Number of countdown seconds before leaving waiting room (if zero, player leaves waiting room immediately)
@@ -84,6 +84,145 @@ initializeMPLIB( sessionConfig , studyId , funList, listenerPaths, verbosity );
 // -------------------------------------
 //       Game Globals
 // -------------------------------------
+
+// Initialize the practice mode
+function startPracticeMode() {
+  const practicePlayer = {
+      x: 1,  // Initial position near the left door
+      y: 2,
+      color: "blue"
+  };
+
+  renderPracticeGrid();
+  placePracticeCoins();
+  placePracticeDoors();
+  updatePracticePlayerPosition(practicePlayer);
+
+  // Add event listener for player movement
+  document.addEventListener("keydown", (event) => handlePracticeMovement(event, practicePlayer));
+}
+
+// Render the 5x5 grid with a 3x3 subgrid in the middle
+function renderPracticeGrid() {
+  const container = document.getElementById("practiceGameContainer");
+  container.innerHTML = "";
+
+  // Create a 5x5 grid
+  for (let y = 0; y < 5; y++) {
+      for (let x = 0; x < 5; x++) {
+          const cell = document.createElement("div");
+          cell.classList.add("practice-cell");
+
+          if (x >= 1 && x <= 3 && y >= 1 && y <= 3) {
+              // Dark grey walls for the 3x3 subgrid
+              cell.classList.add("practice-subgrid-wall");
+          }
+
+          cell.style.top = `${y * 16}px`;
+          cell.style.left = `${x * 16}px`;
+          container.appendChild(cell);
+      }
+  }
+}
+
+// Place three coins inside the subgrid
+function placePracticeCoins() {
+  const container = document.getElementById("practiceGameContainer");
+
+  const coinPositions = [
+      { x: 2, y: 2 },
+      { x: 3, y: 2 },
+      { x: 2, y: 3 }
+  ];
+
+  coinPositions.forEach(pos => {
+      const coin = document.createElement("div");
+      coin.classList.add("practice-coin");
+      coin.style.top = `${pos.y * 16 + 4}px`;
+      coin.style.left = `${pos.x * 16 + 4}px`;
+      container.appendChild(coin);
+  });
+}
+
+// Place doors on all four sides, but only the left door is blue
+function placePracticeDoors() {
+  const container = document.getElementById("practiceGameContainer");
+
+  // Left door (matching the player's color)
+  const leftDoor = document.createElement("div");
+  leftDoor.classList.add("practice-door");
+  leftDoor.style.top = "32px";  // Middle of the left side
+  leftDoor.style.left = "0px";
+  container.appendChild(leftDoor);
+}
+
+// Update the player’s position visually
+function updatePracticePlayerPosition(player) {
+  const container = document.getElementById("practiceGameContainer");
+
+  // Remove the previous player position if any
+  document.querySelectorAll(".practice-player").forEach(el => el.remove());
+
+  // Create a new player element
+  const playerElement = document.createElement("div");
+  playerElement.classList.add("practice-player");
+  playerElement.style.top = `${player.y * 16}px`;
+  playerElement.style.left = `${player.x * 16}px`;
+  container.appendChild(playerElement);
+}
+
+// Handle movement and restrict entry to the subgrid through the left door
+function handlePracticeMovement(event, player) {
+  let newX = player.x;
+  let newY = player.y;
+
+  switch (event.key) {
+      case "ArrowUp":
+          newY = Math.max(0, player.y - 1);
+          break;
+      case "ArrowDown":
+          newY = Math.min(4, player.y + 1);
+          break;
+      case "ArrowLeft":
+          newX = Math.max(0, player.x - 1);
+          break;
+      case "ArrowRight":
+          newX = Math.min(4, player.x + 1);
+          break;
+  }
+
+  // Only allow entering the subgrid through the left door at (1,2)
+  if (
+      (newX === 1 && newY === 2) || // Left door entry point
+      (newX >= 1 && newX <= 3 && newY >= 1 && newY <= 3) || // Inside the subgrid
+      (newX < 1 || newX > 3 || newY < 1 || newY > 3) // Outside the subgrid
+  ) {
+      player.x = newX;
+      player.y = newY;
+      updatePracticePlayerPosition(player);
+  }
+}
+
+let instructionStep = 0;
+const instructions = [
+  "Use cursor keys to move your character and pick up as many tokens as you can.",
+  "You can only collect tokens that match your color.",
+  "You can only go through door that matches your color."
+];
+
+document.getElementById("nextBtn").addEventListener("click", () => {
+  // Update the instruction text for each step
+  instructionStep++;
+  if (instructionStep < instructions.length) {
+    document.getElementById("instructionsMessage").textContent = instructions[instructionStep];
+  } else {
+    // Hide the Next button and show the Join button after the last instruction
+    document.getElementById("nextBtn").style.display = "none";
+    document.getElementById("joinBtn").style.display = "inline-block";
+  }
+});
+
+
 let offsetY = 1;
 let maxCoins = 10;
 

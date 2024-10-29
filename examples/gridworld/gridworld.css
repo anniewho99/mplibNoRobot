@@ -388,4 +388,54 @@ button:active {
   color: #ffffff; /* Set default color, can be styled further if needed */
 }
 
+/* Practice mode container */
+.practice-game-container {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  margin: auto;
+  border: 1px solid #333;
+  background-color: #d3d3d3; /* Light grey background */
+}
+
+/* Practice cells */
+.practice-cell {
+  width: 16px;
+  height: 16px;
+  position: absolute;
+  border: 1px solid #ccc;
+}
+
+/* Subgrid and walls styling */
+.practice-subgrid-wall {
+  background-color: #555; /* Dark grey walls */
+}
+
+.practice-door {
+  width: 16px;
+  height: 16px;
+  position: absolute;
+  background-color: #add8e6; /* Light blue for the left door */
+  border: 2px solid #333;
+  border-radius: 4px;
+}
+
+.practice-coin {
+  width: 8px;
+  height: 8px;
+  background-color: #0000ff; /* Blue coins */
+  border-radius: 50%;
+  position: absolute;
+  z-index: 1;
+}
+
+.practice-player {
+  width: 16px;
+  height: 16px;
+  background-color: #0000ff; /* Blue square for player */
+  position: absolute;
+  z-index: 2;
+}
+
+
 
