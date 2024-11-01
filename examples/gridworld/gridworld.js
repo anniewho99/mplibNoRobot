@@ -554,6 +554,21 @@ let trappedIndex = 1;
 
 let trappedPlayer;
 
+function getPlayerStartingPosition(playerId) {
+  const arrivalIndex = getCurrentPlayerArrivalIndex(playerId);
+
+  // Define starting positions based on arrival index
+  const startingPositions = [
+    { x: mapData.minX, y: mapData.minY },               // Top-left for the first player
+    { x: mapData.maxX, y: mapData.minY },               // Top-right for the second player
+    { x: mapData.minX, y: mapData.maxY },               // Bottom-left for the third player
+    { x: mapData.maxX, y: mapData.maxY }                // Bottom-right for the fourth player
+  ];
+
+  return startingPositions[(arrivalIndex-1) % startingPositions.length];
+}
+
+
 // Function to start the round timer
 function startRoundTimer() {
   timeLeft = roundTime; // Reset the time left at the beginning of each round
@@ -643,8 +658,10 @@ async function resetCoinsAndDoors() {
   // // Step 2: Move all players to starting position
 
   let player = players[playerId];
-  let startX = 1;
-  let startY = 1;
+  const { x, y } = getPlayerStartingPosition(playerId);
+
+  let startX = x;
+  let startY = y;
   console.log(`Moving player ${playerId} to starting position...`);
 
   // Update player's position to the starting coordinates (1,1)
