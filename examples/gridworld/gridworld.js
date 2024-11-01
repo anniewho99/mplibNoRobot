@@ -593,7 +593,7 @@ function updateTimerDisplay(seconds) {
   const timerElement = document.getElementById("round-timer");
   const minutes = Math.floor(seconds / 60);
   const remainingSeconds = seconds % 60;
-  timerElement.textContent = `Time Left for this round: ${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
+  timerElement.textContent = `Time Left For This Round: ${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
 }
 
 function startNewRound() {
@@ -622,6 +622,8 @@ function startNewRound() {
 
 function endRound() {
   isBreakTime = true;
+  document.querySelector('.player-info-panel').style.display = 'none';
+  document.querySelector('.timer-container').style.display = 'none';
   //messageGame.innerText = "Round ended. Next round starts in 5 seconds...";
 
   document.getElementById('roundTitle').innerText = "Round Ended";
@@ -689,6 +691,9 @@ async function resetCoinsAndDoors() {
   placeDoorsForAllSubgrids();  // Place new doors
   fetchAndPopulatePlayerInfo();
   startRoundTimer(); 
+  document.querySelector('.player-info-panel').style.display = 'block';
+  document.querySelector('.timer-container').style.display = 'block';
+
 }
 
 async function initRounds() {
