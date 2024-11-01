@@ -21,7 +21,7 @@
   width: 304px; /* Doubled width to fit four times the original grid */
   height: 304px; /* Doubled height to fit four times the original grid */
   background: url('./images/map_cropped.png') repeat;
-  transform: scale(3);
+  transform: scale(2.5);
   transform-origin: left top; /* Ensure scaling starts from the top-left */
   image-rendering: pixelated;
 }
@@ -388,54 +388,56 @@ button:active {
   color: #ffffff; /* Set default color, can be styled further if needed */
 }
 
-/* Practice mode container */
-.practice-game-container {
+#practiceGameContainer {
   position: relative;
-  width: 80px;
-  height: 80px;
-  margin: auto;
-  border: 1px solid #333;
+  width: calc(15 * 32px); /* Adjust width to match 15 columns */
+  height: calc(13 * 32px); /* Adjust height to match 13 rows */
+  margin: 0 auto; /* Center horizontally */
+  display: grid;
+  grid-template-columns: repeat(15, 32px);
+  grid-template-rows: repeat(13, 32px);
   background-color: #d3d3d3; /* Light grey background */
 }
 
-/* Practice cells */
+/* Individual cells */
 .practice-cell {
-  width: 16px;
-  height: 16px;
-  position: absolute;
-  border: 1px solid #ccc;
+  background-color: #d3d3d3;
+  border: 1px solid white;
 }
 
-/* Subgrid and walls styling */
-.practice-subgrid-wall {
-  background-color: #555; /* Dark grey walls */
-}
-
-.practice-door {
-  width: 16px;
-  height: 16px;
+/* Subgrid outline styling */
+.subgrid-outline {
   position: absolute;
-  background-color: #add8e6; /* Light blue for the left door */
-  border: 2px solid #333;
-  border-radius: 4px;
-}
-
-.practice-coin {
-  width: 8px;
-  height: 8px;
-  background-color: #0000ff; /* Blue coins */
-  border-radius: 50%;
-  position: absolute;
+  border: 3px solid darkgrey;
+  pointer-events: none;
   z-index: 1;
 }
 
-.practice-player {
-  width: 16px;
-  height: 16px;
-  background-color: #0000ff; /* Blue square for player */
+/* Practice doors */
+.practice-door {
   position: absolute;
-  z-index: 2;
+  z-index: 2; /* Ensure doors are above grid lines */
 }
 
+
+/* Practice coins */
+.practice-coin {
+  width: 14px;
+  height: 14px;
+  background-color: blue; /* Color of the coin */
+  border-radius: 50%;
+  position: absolute;
+  transform: translate(50%, 50%);
+}
+
+/* Practice player */
+.practice-player {
+  width: 24px;
+  height: 24px;
+  background-color: blue; /* Player color */
+  position: absolute;
+  border-radius: 2px;
+  transform: translate(20%, 20%);
+}
 
 

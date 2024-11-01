@@ -13,18 +13,22 @@
 </head>
 
 <body>
-<div class="container" id="instructionsScreen">
-    <h1 id="instructionsTitle">Instructions</h1>
-    <div class="containertext" id="instructionText">
-        <p id="instructionsMessage">Use cursor keys to move your character and pick up as many tokens as you can.</p>
+    <div class="container" id="instructionsScreen">
+        <h1 id="instructionsTitle">Instructions</h1>
+        <div class="containertext" id="instructionText">
+            <p id="instructionsMessage">Use cursor keys to move your character and pick up as many tokens as you can.</p>
+        </div>
+    
+        <!-- Practice Game Container -->
+        <div id="practiceGameContainer"  style="display: none;"></div>
+    
+        <!-- Navigation Buttons -->
+        <div class="instruction-buttons">
+            <a href="#" class="button" id="nextBtn">Next</a> <!-- Next button for instructions -->
+            <a href="#" class="button" id="joinBtn" style="display: none;">Join Game</a> <!-- Join button, hidden initially -->
+        </div>
     </div>
-
-    <!-- Practice Game Container (hidden by default) -->
-    <div id="practiceGameContainer" style="display: none;"></div>
-
-    <a href="#" class="button" id="nextBtn">Next</a>  <!-- Next button for instructions -->
-    <a href="#" class="button" id="joinBtn" style="display: none;">Join Game</a>  <!-- Join button, hidden initially -->
-</div>
+    
 
     
     
