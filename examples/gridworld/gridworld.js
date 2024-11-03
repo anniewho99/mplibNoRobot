@@ -88,41 +88,81 @@ initializeMPLIB( sessionConfig , studyId , funList, listenerPaths, verbosity );
 // Instructions for each step
 let instructionStep = 0;
 const instructions = [
-  "Use the arrow keys to move your character around the grid.",
-  "Remember: you can only collect coins that match your color!",
-  "Doors also follow the color rule. You can only pass through doors that match your color.",
-  "Ready to try it out? Click 'Next' to begin a practice round and collect some tokens!"
+  "Welcome! You’ll use the arrow keys to move your character around the grid. Let's start by placing you as the blue character on the top left corner!",
+  "You are now the blue character in the top left corner of the grid, which has four rooms separated by walls and doors",
+  "Each room has doors in different colors, and you can only pass through doors that match your color. Try passing through the blue door to enter a room!",
+  "Next, let’s collect some tokens. You can only collect tokens that match your color. Ready to try collecting tokens? Go ahead and collect the three blue tokens in the top left room.",
+  "other player"
 ];
+// // Handle instruction progression
+// document.getElementById("nextBtn").addEventListener("click", () => {
+//   instructionStep++;
+//   if (instructionStep < instructions.length) {
+//     document.getElementById("instructionsMessage").textContent = instructions[instructionStep];
+//   } else {
+//     // Hide Next button and start practice mode on the last step
+//     document.getElementById("nextBtn").style.display = "none";
+//     startPracticeMode();  // Start the practice mode after the last instruction
+//   }
+// });
 
-// Handle instruction progression
 document.getElementById("nextBtn").addEventListener("click", () => {
-  instructionStep++;
   if (instructionStep < instructions.length) {
     document.getElementById("instructionsMessage").textContent = instructions[instructionStep];
+    handleInstructionStep(instructionStep);
+    if(instructionStep !== 2 && instructionStep !== 3){
+      instructionStep++;
+    }
+
   } else {
-    // Hide Next button and start practice mode on the last step
+    // Hide the Next button and show the Join button at the end of instructions
     document.getElementById("nextBtn").style.display = "none";
-    startPracticeMode();  // Start the practice mode after the last instruction
+    document.getElementById("joinBtn").style.display = "inline-block";
+    document.getElementById("instructionsMessage").textContent = "Practice complete! Click 'Join Game' to start the real game.";
   }
 });
 
-// Initializes practice mode
-function startPracticeMode() {
+
+function handleInstructionStep(step) {
+  switch (step) {
+    case 1:
+      renderPracticeGrid(); // Initialize grid without player, doors, or coins
+      placePracticePlayer();
+      placePracticeDoors();
+      break;
+    case 2:
+      removePracticePlayer();
+      EnablePlacePracticePlayer();
+      document.getElementById("nextBtn").style.display = "none";
+      break;
+    case 3:
+      placePracticeCoins();  
+      document.getElementById("nextBtn").style.display = "none";
+      break;
+  }
+}
+
+function placePracticePlayer() {
   const practicePlayer = { x: 0, y: 0, color: "blue" };
-  let collectedTokens = 0;
-  const totalPracticeTokens = 3;
-
-  document.getElementById("instructionsMessage").textContent = 
-    "You are the blue player in the top left corner. Now try to collect the three blue coins in the top left room.";
-
-  // Show the practice game container and render elements
-  document.getElementById("practiceGameContainer").style.display = "block";
-  renderPracticeGrid();
-  placePracticeCoins();
-  placePracticeDoors();
   updatePracticePlayerPosition(practicePlayer);
+  const playerElement = document.createElement("div");
+  playerElement.classList.add("practice-player");
+  playerElement.style.top = `${practicePlayer.y * CELL_SIZE}px`;
+  playerElement.style.left = `${practicePlayer.x * CELL_SIZE}px`;
+  document.getElementById("practiceGameContainer").appendChild(playerElement);
+}
 
-  // Add event listener for player movement
+function removePracticePlayer() {
+  document.querySelectorAll(".practice-player").forEach(el => el.remove());
+}
+
+
+function EnablePlacePracticePlayer() {
+  const practicePlayer = { x: 0, y: 0, color: "blue" };
+  updatePracticePlayerPosition(practicePlayer);
+  let collectedTokens = 0;
+  let totalPracticeTokens = 3
+
   function handlePracticeMovement(event) {
     movePracticePlayer(event, practicePlayer);  // Update player position based on keys
     if (checkForTokenCollection(practicePlayer)) {
@@ -130,11 +170,11 @@ function startPracticeMode() {
       if (collectedTokens >= totalPracticeTokens) {
         // End practice mode when all tokens are collected
         document.removeEventListener("keydown", handlePracticeMovement);
-        endPracticeMode();
+        instructionStep = 4;
+        document.getElementById("nextBtn").style.display = "inline-block";
       }
     }
   }
-
   // Bind movement handling to keydown event for practice mode
   document.addEventListener("keydown", handlePracticeMovement);
 }
@@ -151,6 +191,7 @@ const SUBGRIDS = [
 ];
 
 function renderPracticeGrid() {
+  document.getElementById("practiceGameContainer").style.display = "block";
   const container = document.getElementById("practiceGameContainer");
   container.innerHTML = "";
 
@@ -312,8 +353,10 @@ function movePracticePlayer(event, player) {
 
   // Check if the player is trying to enter a subgrid from a valid blue door
   const isEnteringFromDoor = validEntryPoints.some(point => newX === point.x && newY === point.y);
-  if (isEnteringFromDoor) {
+  if (isEnteringFromDoor && instructionStep === 2) {
     console.log(`Entering from door at: (${newX}, ${newY})`);
+    instructionStep = 3;
+    document.getElementById("nextBtn").style.display = "inline-block";
   }
 
   // Check if the player is within any of the subgrid areas
@@ -380,16 +423,7 @@ function checkForTokenCollection(player) {
 }
 
 
-// End practice mode and show join button
-function endPracticeMode() {
-  document.getElementById("instructionsMessage").textContent = "Practice complete! Click 'Join Game' to start the real game.";
-  document.getElementById("nextBtn").style.display = "none";
-  document.getElementById("joinBtn").style.display = "inline-block";
-}
-
-
 let offsetY = 1;
-let maxCoins = 10;
 
 let mapData = {
   minX: 1,
@@ -905,77 +939,6 @@ function isOccupied(x,y) {
   )
 }
 
-
-// async function placeTokensForPlayer(playerId) {
-//   let player = players[playerId];
-//   if (!player) return;
-
-//   // Log player data for debugging
-//   // console.log(`Placing tokens for player ${playerId}. Player data:`, player);
-
-//   // Initialize or retrieve the current used subgrid for this player
-//   if (!player.currentSubgrid) {
-//     player.currentSubgrid = null;
-//   }
-
-//   // Collect all subgrids currently used by all players
-//   let allUsedSubgrids = Object.values(players)
-//     .map(p => (p.currentSubgrid != null) ? p.currentSubgrid - 1 : null); 
-//   // Log all used subgrids for debugging
-//   // console.log(`All used subgrids by players:`, allUsedSubgrids);
-
-//   // Filter out subgrids used by other players, but include the player's own subgrid
-//   let availableSubgrids = subgridPositions.filter((_, index) => 
-//     !allUsedSubgrids.includes(index)
-//   );
-
-//   // Log available subgrids for debugging
-//   // console.log(`Available subgrids for player ${playerId}:`, availableSubgrids);
-
-//   // Select a new subgrid randomly from the available ones
-//   let subgridIndex = Math.floor(Math.random() * availableSubgrids.length);
-//   let selectedSubgrid = availableSubgrids[subgridIndex];
-
-//   // Get the index of the selected subgrid to track it
-//   let subgridPositionIndex = subgridPositions.indexOf(selectedSubgrid);
-
-//   // Update the player's current subgrid in the database
-//   let path = `players/${playerId}`;
-//   let newState = {
-//     ...player,
-//     currentSubgrid: subgridPositionIndex + 1, // Store subgrid index with +1 offset
-//   };
-
-//   // Log the new subgrid for debugging
-//   // console.log(`Assigning new subgrid ${subgridPositionIndex} to player ${playerId}`);
-
-//   await updateStateDirect(path, newState);
-
-//   let placedPositions = new Set(); // Track placed positions to avoid overlaps
-
-//   // Place three coins within the selected subgrid
-//   for (let i = 0; i < 3;) {
-//     let x = Math.floor(Math.random() * (selectedSubgrid.xEnd - selectedSubgrid.xStart + 1)) + selectedSubgrid.xStart;
-//     let y = Math.floor(Math.random() * (selectedSubgrid.yEnd - selectedSubgrid.yStart + 1)) + selectedSubgrid.yStart;
-//     let positionKey = `${x},${y}`;
-
-//     // Ensure the position is not occupied and not already used
-//     if (!isOccupied(x, y) && !placedPositions.has(positionKey)) {
-//       let id = `coins/${getKeyString(x, y)}`;
-//       let newState = { x, y, color: player.color, id: playerId }; // Set the coin color to match the player
-
-//       updateStateDirect(id, newState); // Save the new state in Firebase
-//       //console.log(`Coin data written to ${id}:`, newState); 
-
-//       placedPositions.add(positionKey); // Mark this position as used
-//       i++; // Only increment after a successful placement
-//     }
-//   }
-
-//   // Log token placement for debugging
-//   //console.log(`Placed tokens for player ${playerId} in subgrid ${subgridPositionIndex}`);
-// }
-
 async function placeTokensForPlayer(playerId) {
   let player = players[playerId];
   if (!player) return;
@@ -1094,20 +1057,6 @@ async function handleArrowPress(xChange = 0, yChange = 0) {
 
       // Retrieve the door data from Firebase
       canMove = await getDoorAtPosition(newX, newY, players[playerId].color, playerId);
-
-      // if (door) {
-      //   console.log(`Found door at (${newX}, ${newY}) with color "${door.color}"`);
-
-      //   if (door.color !== players[playerId].color) {
-      //     console.log(`Blocked! Door color "${door.color}" does not match player color "${players[playerId].color}".`);
-      //     canMove = false;  // Block movement
-      //   } else {
-      //     console.log(`Door color matches! Movement allowed.`);
-      //   }
-      // } else {
-      //   console.log(`No door found at position (${newX}, ${newY}). Blocking movement.`);
-      //   canMove = false;
-      // }
     } else {
       //console.log(`This is not a door movement. Movement allowed.`);
     }
@@ -1173,31 +1122,6 @@ async function handleArrowPress(xChange = 0, yChange = 0) {
     fetchAndPopulatePlayerInfo();
   }
 }
-
-
-// async function assignUniqueColor() {
-//   // Fetch all current players from the Firebase database
-//   let players = await readState('players');
-//   let usedColors = new Set();
-
-//   // Collect all colors that are currently being used
-//   if (players !== null) {
-//     Object.values(players).forEach(player => {
-//       if (player.color) {
-//         usedColors.add(player.color);
-//       }
-//     });
-//   }
-
-//   // Find the first available color that isn't used
-//   let availableColor = playerColors.find(color => !usedColors.has(color));
-//   if (!availableColor) {
-//     console.error('No available colors left for players!');
-//     return null;
-//   }
-
-//   return availableColor;
-// }
 
 // Helper function to determine the correct filter value based on the color
 function getFilterForColor(color) {
