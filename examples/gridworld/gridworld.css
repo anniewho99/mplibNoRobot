@@ -424,7 +424,7 @@ button:active {
 .practice-coin {
   width: 14px;
   height: 14px;
-  background-color: blue; /* Color of the coin */
+  background-color: #4b85db; /* Color of the coin */
   border-radius: 50%;
   position: absolute;
   transform: translate(50%, 50%);
