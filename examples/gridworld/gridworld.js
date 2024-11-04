@@ -190,6 +190,17 @@ const SUBGRIDS = [
     { start: [10, 8], end: [12, 10] }
 ];
 
+const insideSubgrids = [
+  { startX: 2, startY: 2, endX: 4, endY: 4 },   // Top-left subgrid area
+  { startX: 2, startY: 8, endX: 4, endY: 10 },  // Bottom-left subgrid area
+  { startX: 10, startY: 2, endX: 12, endY: 4 }, // Top-right subgrid area
+  { startX: 10, startY: 8, endX: 12, endY: 10 } // Bottom-right subgrid area
+];
+
+const doorColors = ["blue", "orange", "yellow", "purple"];
+
+let blueDoorPositions = [];
+
 function renderPracticeGrid() {
   document.getElementById("practiceGameContainer").style.display = "block";
   const container = document.getElementById("practiceGameContainer");
@@ -237,7 +248,7 @@ function renderPracticeGrid() {
 function placePracticeDoors() {
   const container = document.getElementById("practiceGameContainer");
 
-  SUBGRIDS.forEach((subgrid) => {
+  SUBGRIDS.forEach((subgrid, subgridIndex) => {
     const doorPositions = [
       { x: subgrid.start[0], y: (subgrid.start[1] + subgrid.end[1]) / 2, side: "left" },    // Left side
       { x: subgrid.end[0] + 1, y: (subgrid.start[1] + subgrid.end[1]) / 2, side: "right" },     // Right side
@@ -248,6 +259,7 @@ function placePracticeDoors() {
     doorPositions.forEach(pos => {
       const door = document.createElement("div");
       door.classList.add("practice-door");
+      door.setAttribute("data-subgrid-index", subgridIndex);
 
       // Door orientation and dimensions
       if (pos.side === "left" || pos.side === "right") {
@@ -258,10 +270,12 @@ function placePracticeDoors() {
         door.style.height = "5px";   // Horizontal doors
       }
 
-      // Door color based on position
+      // Door color based on position and define entry/exit points
       switch (pos.side) {
         case "left":
           door.style.backgroundColor = "blue";
+          allEntryPoints[subgridIndex] = [{ x: pos.x, y: pos.y }]; 
+          allExitPoints[subgridIndex] = [{ x: pos.x - 1, y: pos.y }]; 
           break;
         case "right":
           door.style.backgroundColor = "orange";
@@ -312,6 +326,101 @@ function updatePracticePlayerPosition(player) {
   container.appendChild(playerElement);
 }
 
+// Arrays to store entry and exit points for each subgrid
+let allEntryPoints = [];
+let allExitPoints = [];
+
+// Calculate entry and exit points for a specific subgrid based on the blue door's position and side
+function calculateEntryExitPointsForSubgrid(subgridIndex, blueDoorPos, side) {
+  // Calculate entry point for the blue door
+
+  // Calculate exit point based on the side of the blue door
+  let exitPoint;
+  let entryPoint;
+  switch (side) {
+    case "left":
+      entryPoint = { x: blueDoorPos.x , y: blueDoorPos.y };
+      exitPoint = { x: blueDoorPos.x - 1, y: blueDoorPos.y };
+      break;
+    case "right":
+      entryPoint = { x: blueDoorPos.x - 1, y: blueDoorPos.y };
+      exitPoint = { x: blueDoorPos.x, y: blueDoorPos.y };
+      break;
+    case "top":
+      entryPoint = { x: blueDoorPos.x, y: blueDoorPos.y };
+      exitPoint = { x: blueDoorPos.x, y: blueDoorPos.y - 1 };
+      break;
+    case "bottom":
+      entryPoint = { x: blueDoorPos.x, y: blueDoorPos.y - 1};
+      exitPoint = { x: blueDoorPos.x, y: blueDoorPos.y };
+      break;
+  }
+
+  // Store entry and exit points for the specific subgrid
+  allEntryPoints[subgridIndex] = [entryPoint];
+  allExitPoints[subgridIndex] = [exitPoint];
+}
+
+// Shuffle doors for a specific subgrid, update the entry and exit points for that subgrid only
+function shuffleDoors(subgridIndex) {
+  // Clear existing doors in the container
+  console.log("door shuffled");
+  document.querySelectorAll(`.practice-door[data-subgrid-index="${subgridIndex}"]`).forEach(door => door.remove());
+  // Shuffle door colors
+  const shuffledColors = [...doorColors].sort(() => Math.random() - 0.5);
+
+  // Define door positions for the subgrid
+  const doorPositions = [
+    { side: "left", position: { x: SUBGRIDS[subgridIndex].start[0], y: (SUBGRIDS[subgridIndex].start[1] + SUBGRIDS[subgridIndex].end[1]) / 2 } },
+    { side: "right", position: { x: SUBGRIDS[subgridIndex].end[0] + 1, y: (SUBGRIDS[subgridIndex].start[1] + SUBGRIDS[subgridIndex].end[1]) / 2 } },
+    { side: "top", position: { x: (SUBGRIDS[subgridIndex].start[0] + SUBGRIDS[subgridIndex].end[0]) / 2, y: SUBGRIDS[subgridIndex].start[1]} },
+    { side: "bottom", position: { x: (SUBGRIDS[subgridIndex].start[0] + SUBGRIDS[subgridIndex].end[0]) / 2, y: SUBGRIDS[subgridIndex].end[1] + 1 } }
+  ];
+
+  // Loop through the door positions and assign colors
+  doorPositions.forEach((door, index) => {
+    const color = shuffledColors[index];
+
+    // Create a door element and style it
+    const doorElement = document.createElement("div");
+    doorElement.classList.add("practice-door");
+    doorElement.style.backgroundColor = color;
+
+    // Door dimensions based on orientation
+    if (door.side === "left" || door.side === "right") {
+      doorElement.style.width = "5px";
+      doorElement.style.height = "32px"; // Vertical doors
+    } else {
+      doorElement.style.width = "32px";
+      doorElement.style.height = "5px"; // Horizontal doors
+    }
+
+    // Apply position with slight offsets for centering
+    doorElement.style.top = `${door.position.y * 32 + (door.side === "top" ? -2 : (door.side === "bottom" ? -2.5 : 0))}px`;
+    doorElement.style.left = `${door.position.x * 32 + (door.side === "left" ? -2 : (door.side === "right" ? -2.5 : 0))}px`;
+
+    // Add the door to the container
+    document.getElementById("practiceGameContainer").appendChild(doorElement);
+
+    // Update entry and exit points if the door is blue
+    if (color === "blue") {
+      blueDoorPositions[subgridIndex] = door.position;
+      calculateEntryExitPointsForSubgrid(subgridIndex, door.position, door.side);
+    }
+  });
+}
+
+// // Initialize entry and exit points for all subgrids (to be called once initially)
+// function initializeEntryExitPoints() {
+//   SUBGRIDS.forEach((subgrid, index) => {
+//     shuffleDoors(index); // Place doors and initialize entry/exit points for each subgrid
+//   });
+// }
+
+// // Call this function during initial setup
+// initializeEntryExitPoints();
+
+// Update movePracticePlayer to use allEntryPoints and allExitPoints
 function movePracticePlayer(event, player) {
   let oldX = player.x;
   let oldY = player.y;
@@ -328,32 +437,16 @@ function movePracticePlayer(event, player) {
 
   console.log(`Attempting to move to: (${newX}, ${newY})`);
 
-  // Define entry points and valid areas for each subgrid
-  const validEntryPoints = [
-    { x: 2, y: 3 }, // Entry point for the top-left subgrid
-    { x: 2, y: 9 }, // Entry point for the bottom-left subgrid
-    { x: 10, y: 3 }, // Entry point for the top-right subgrid
-    { x: 10, y: 9 }  // Entry point for the bottom-right subgrid
-  ];
+  // Check if the player is trying to enter a subgrid from any valid blue door
+  const isEnteringFromDoor = allEntryPoints.some(points => points.some(point => newX === point.x && newY === point.y));
 
-  const validExitPoints = [
-    { x: 1, y: 3 },  // Exit point for the top-left subgrid
-    { x: 1, y: 9 },  // Exit point for the bottom-left subgrid
-    { x: 9, y: 3 },  // Exit point for the top-right subgrid
-    { x: 9, y: 9 }   // Exit point for the bottom-right subgrid
-  ];
+  // Identify which subgrid the player is entering
+  const subgridIndex = SUBGRIDS.findIndex(subgrid =>
+    newX >= subgrid.start[0] && newX <= subgrid.end[0] &&
+    newY >= subgrid.start[1] && newY <= subgrid.end[1]
+  );
 
-
-  const insideSubgrids = [
-    { startX: 2, startY: 2, endX: 4, endY: 4 },   // Top-left subgrid area
-    { startX: 2, startY: 8, endX: 4, endY: 10 },  // Bottom-left subgrid area
-    { startX: 10, startY: 2, endX: 12, endY: 4 }, // Top-right subgrid area
-    { startX: 10, startY: 8, endX: 12, endY: 10 } // Bottom-right subgrid area
-  ];
-
-  // Check if the player is trying to enter a subgrid from a valid blue door
-  const isEnteringFromDoor = validEntryPoints.some(point => newX === point.x && newY === point.y);
-  if (isEnteringFromDoor && instructionStep === 2) {
+  if (isEnteringFromDoor && subgridIndex !== -1 && instructionStep === 2) {
     console.log(`Entering from door at: (${newX}, ${newY})`);
     instructionStep = 3;
     document.getElementById("nextBtn").style.display = "inline-block";
@@ -365,34 +458,27 @@ function movePracticePlayer(event, player) {
     oldY >= subgrid.startY && oldY <= subgrid.endY
   );
 
-  if (isInsideSubgrid) {
-    console.log(`player is currently inside subgrid)`);
+  if (isEnteringFromDoor && subgridIndex !== -1 && !isInsideSubgrid) {
+    shuffleDoors(subgridIndex);
   }
+
 
   const isMovingWithinSubgrid = insideSubgrids.some(subgrid =>
     newX >= subgrid.startX && newX <= subgrid.endX &&
     newY >= subgrid.startY && newY <= subgrid.endY
   );
-  if (isMovingWithinSubgrid ) {
-    console.log(`Moving within subgrid at position: (${newX}, ${newY})`);
-  }
 
-  const isExitingThroughDoor = validExitPoints.some(point => newX === point.x && newY === point.y);
+  const isExitingThroughDoor = allExitPoints.some(points => points.some(point => newX === point.x && newY === point.y));
 
   const isAttemptingInvalidEntry = !isInsideSubgrid && isMovingWithinSubgrid && !isEnteringFromDoor;
-
   const isAttemptingInvalidExit = isInsideSubgrid && !isMovingWithinSubgrid && !isExitingThroughDoor;
-
 
   if (isAttemptingInvalidEntry) {
     console.log(`Blocked entry attempt to subgrid at position: (${newX}, ${newY})`);
   } else if (isAttemptingInvalidExit) {
     console.log(`Blocked exit attempt from subgrid at position: (${newX}, ${newY})`);
   } else {
-    // Allow movement if:
-    // 1. The player is entering from a door
-    // 2. The player is moving within the subgrid
-    // 3. The player is outside the subgrid and not attempting an invalid exit
+    // Allow movement if the conditions are met
     console.log(`Move allowed to position: (${newX}, ${newY})`);
     player.x = newX;
     player.y = newY;
