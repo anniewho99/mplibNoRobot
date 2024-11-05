@@ -48,8 +48,8 @@ const studyId = 'gridworld';
 
 // Configuration setting for the session
 let sessionConfig = {
-    minPlayersNeeded: 2, // Minimum number of players needed; if set to 1, there is no waiting room (unless a countdown has been setup)
-    maxPlayersNeeded: 2, // Maximum number of players allowed in a session
+    minPlayersNeeded: 4, // Minimum number of players needed; if set to 1, there is no waiting room (unless a countdown has been setup)
+    maxPlayersNeeded: 4, // Maximum number of players allowed in a session
     maxParallelSessions: 0, // Maximum number of sessions in parallel (if zero, there are no limit)
     allowReplacements: true, // Allow replacing any players who leave an ongoing session?
     exitDelayWaitingRoom: 0, // Number of countdown seconds before leaving waiting room (if zero, player leaves waiting room immediately)
@@ -122,7 +122,7 @@ document.getElementById("nextBtn").addEventListener("click", () => {
     // Hide the Next button and show the Join button at the end of instructions
     document.getElementById("nextBtn").style.display = "none";
     document.getElementById("joinBtn").style.display = "inline-block";
-    document.getElementById("instructionsMessage").textContent = "Practice complete! You'll now be assigned a new player avatar with a unique color. Click 'Join Game' to enter the waiting room and be paired with another player. ";
+    document.getElementById("instructionsMessage").textContent = "Practice complete! You'll now be assigned a new player avatar with a unique color. Click 'Join Game' to enter the waiting room and be paired with three other players. ";
   }
 });
 
@@ -2039,7 +2039,7 @@ function joinWaitingRoom() {
   let numPlayers = getNumberCurrentPlayers(); // the current number of players
   let numNeeded = sessionConfig.minPlayersNeeded - numPlayers;
  
-  let str2 = `We are waiting for ${ numNeeded } additional ${ numPlayers > 1 ? 'players' : 'player' }... Once you join the game, you'll be playing alongside one other player. Each player has their own character, and they’ll be pursuing coins in a different color from yours.`;
+  let str2 = `We are waiting for ${ numNeeded } additional ${ numPlayers > 1 ? 'players' : 'player' }... Once you join the game, you'll be playing alongside three other players. Each player has their own character, and they’ll be pursuing coins in a different color from yours.`;
   messageWaitingRoom.innerText = str2;
   
   // switch screens from instruction to waiting room
