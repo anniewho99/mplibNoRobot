@@ -460,6 +460,61 @@ button:active {
   transform: translate(50%, 50%);
 }
 
+.grayscreen {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 50%; /* Set to 50% width */
+  max-width: 600px; /* Limit max width */
+  height: 80%; /* Set to 80% height */
+  max-height: 80vh; /* Limit max height to viewport */
+  background: whitesmoke; /* Slightly opaque grey background */
+  color: #333;
+  padding: 20px;
+  transform: translate(-50%, -50%); /* Center horizontally and vertically */
+  border-radius: 10px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3); /* Add shadow for emphasis */
+  overflow-y: auto; /* Enable vertical scrolling */
+  text-align: center;
+  z-index: 1000;
+}
+
+/* Text sections inside the consent screen */
+#consentDiv h3, #consentDiv h4, #consentDiv p, #consentbox {
+  max-width: 90%;
+  margin: 10px auto;
+  text-align: left;
+}
+
+/* Styling for the checkbox and button area */
+#consentbox {
+  margin-top: 20px;
+  text-align: left;
+  padding: 10px;
+}
+
+.buttonplacement {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+/* Button styling */
+#consentProceed {
+  padding: 10px 20px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+#consentProceed:hover {
+  background-color: #45a049;
+}
+
 
 
 

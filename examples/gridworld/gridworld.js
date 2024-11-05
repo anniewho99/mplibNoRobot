@@ -84,6 +84,20 @@ initializeMPLIB( sessionConfig , studyId , funList, listenerPaths, verbosity );
 // -------------------------------------
 //       Game Globals
 // -------------------------------------
+document.getElementById("consentProceed").addEventListener("click", () => {
+  const consentCheckbox = document.getElementById("consentcheckbox");
+  
+  if (consentCheckbox.checked) {
+      // Hide consent screen and show instructions screen
+      document.getElementById("consentDiv").style.display = "none";
+      document.getElementById("instructionsScreen").style.display = "block";
+      
+      // Optionally set full-screen mode if required
+      document.documentElement.requestFullscreen();
+  } else {
+      alert("Please check the consent box to proceed.");
+  }
+});
 
 // Instructions for each step
 let instructionStep = 0;
