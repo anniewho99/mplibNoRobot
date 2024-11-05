@@ -436,10 +436,30 @@ button:active {
   height: 32px;
   position: absolute;
   background: url('./images/characters.png') no-repeat; /* Set to your character sprite sheet */
-  background-position: 0px 0px; /* Top-left corner to show only the first character */
+  background-position: -32px 0px; /* Top-left corner to show only the first character */
   background-size: 64px auto; /* Scale the sheet if needed; adjust to actual sprite sheet dimensions */
   caret-color: transparent;
 }
+
+.practice-yellow-player {
+  width: 32px; /* Match the character size */
+  height: 32px;
+  position: absolute;
+  background: url('./images/characters.png') no-repeat; /* Set to your character sprite sheet */
+  background-position: 0px -96px; /* Adjust position to show the yellow character */
+  background-size: 64px auto; /* Scale the sheet if needed; adjust to actual sprite sheet dimensions */
+  caret-color: transparent;
+}
+
+.practice-coin-yellow {
+  width: 14px;
+  height: 14px;
+  background-color: yellow; /* Color of the coin */
+  border-radius: 50%;
+  position: absolute;
+  transform: translate(50%, 50%);
+}
+
 
 
 

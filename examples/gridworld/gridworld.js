@@ -92,19 +92,9 @@ const instructions = [
   "You are now the blue character in the top left corner of the grid, which has four rooms separated by walls and doors",
   "Each room has doors in different colors, and you can only pass through doors that match your color. Try passing through the blue door to enter a room!",
   "Next, let’s collect some tokens. You can only collect tokens that match your color. Ready to try collecting tokens? Go ahead and collect the three blue tokens in the top left room.",
-  "other player"
-];
-// // Handle instruction progression
-// document.getElementById("nextBtn").addEventListener("click", () => {
-//   instructionStep++;
-//   if (instructionStep < instructions.length) {
-//     document.getElementById("instructionsMessage").textContent = instructions[instructionStep];
-//   } else {
-//     // Hide Next button and start practice mode on the last step
-//     document.getElementById("nextBtn").style.display = "none";
-//     startPracticeMode();  // Start the practice mode after the last instruction
-//   }
-// });
+  "The other player, such as the yellow player on the top right corner, will go collect the yellow coins in the top right room. ",
+  "You will be assigned a new player avatar doing the  "
+]
 
 document.getElementById("nextBtn").addEventListener("click", () => {
   if (instructionStep < instructions.length) {
@@ -139,7 +129,34 @@ function handleInstructionStep(step) {
       placePracticeCoins();  
       document.getElementById("nextBtn").style.display = "none";
       break;
+    case 4:
+      placeYellowPlayer();
+      placeYellowTokens();
+      break;
+    case 5:
+      moveYellowPlayer(yellowDirection);
   }
+}
+
+function placeYellowPlayer() {
+  const yellowPlayer = { x: GRID_WIDTH - 1, y: 0, color: "yellow" };
+  updatePlayerPosition(yellowPlayer, "yellow"); // Pass "yellow" to use the yellow sprite
+  return yellowPlayer;
+}
+
+function updatePlayerPosition(player, color) {
+  const container = document.getElementById("practiceGameContainer");
+
+  // Remove previous player position if any
+  document.querySelectorAll(`.player-${color}`).forEach(el => el.remove());
+
+  // Create a new player element
+  const playerElement = document.createElement("div");
+  playerElement.classList.add(`practice-${color}-player`, "practice-player"); // Add the color-specific class
+  playerElement.style.top = `${player.y * CELL_SIZE}px`;
+  playerElement.style.left = `${player.x * CELL_SIZE}px`;
+
+  container.appendChild(playerElement);
 }
 
 function placePracticePlayer() {
@@ -276,15 +293,19 @@ function placePracticeDoors() {
           door.style.backgroundColor = "#6ba2d1";
           allEntryPoints[subgridIndex] = [{ x: pos.x, y: pos.y }]; 
           allExitPoints[subgridIndex] = [{ x: pos.x - 1, y: pos.y }]; 
+          door.setAttribute("data-color", "#6ba2d1");
           break;
         case "right":
           door.style.backgroundColor = "orange";
+          door.setAttribute("data-color", "orange");
           break;
         case "top":
           door.style.backgroundColor = "yellow";
+          door.setAttribute("data-color","yellow");
           break;
         case "bottom":
           door.style.backgroundColor = "purple";
+          door.setAttribute("data-color", "purple");
           break;
       }
 
@@ -385,6 +406,8 @@ function shuffleDoors(subgridIndex) {
     const doorElement = document.createElement("div");
     doorElement.classList.add("practice-door");
     doorElement.style.backgroundColor = color;
+    doorElement.setAttribute("data-color", color);
+    doorElement.setAttribute("data-subgrid-index", subgridIndex);
 
     // Door dimensions based on orientation
     if (door.side === "left" || door.side === "right") {
@@ -409,16 +432,6 @@ function shuffleDoors(subgridIndex) {
     }
   });
 }
-
-// // Initialize entry and exit points for all subgrids (to be called once initially)
-// function initializeEntryExitPoints() {
-//   SUBGRIDS.forEach((subgrid, index) => {
-//     shuffleDoors(index); // Place doors and initialize entry/exit points for each subgrid
-//   });
-// }
-
-// // Call this function during initial setup
-// initializeEntryExitPoints();
 
 // Update movePracticePlayer to use allEntryPoints and allExitPoints
 function movePracticePlayer(event, player) {
@@ -507,6 +520,116 @@ function checkForTokenCollection(player) {
   }
   return false;
 }
+
+let yellowDirection;
+
+const yellowPaths = {
+  Left: [[13, 0], [12, 0], [11, 0], [10, 0], [9, 0], [9, 1], [9, 2], [9, 3], [10, 3], [11, 3], [12, 3]],
+  Right: [[13, 0], [12, 0], [12, 1], [12, 2], [12, 3], [11, 3], [10, 3]],
+  Up: [[13, 0], [12, 0], [11, 0], [11, 1], [11, 2], [11, 3], [11, 4]],
+  Down: [[13, 0], [13, 1], [13, 2], [13, 3], [13, 4], [13, 5], [12, 5], [11, 5], [11, 4], [11, 3], [11, 2]]
+};
+
+function getYellowDoorInTopRightSubgrid() {
+  const yellowDoor = document.querySelector(`.practice-door[data-subgrid-index="2"][data-color="yellow"]`);
+  return yellowDoor ? { x: parseInt(yellowDoor.style.left) / 32, y: parseInt(yellowDoor.style.top) / 32 } : null;
+}
+
+function placeYellowTokens() {
+  const yellowDoorPos = getYellowDoorInTopRightSubgrid();
+
+  if (!yellowDoorPos) return;
+
+  const container = document.getElementById("practiceGameContainer");
+  const tokenPositions = [];
+  const yPos = Math.floor(Number(yellowDoorPos.y));
+
+
+  if (yPos === SUBGRIDS[2].start[1] - 1 || yPos === SUBGRIDS[2].end[1]) {
+    if(yPos === SUBGRIDS[2].start[1] - 1 ){
+      yellowDirection = "Up";
+    }else{
+      yellowDirection = "Down";
+    }
+        // Left or right door: place tokens in the middle row
+    tokenPositions.push({ x: yellowDoorPos.x, y: SUBGRIDS[2].start[1] });
+    tokenPositions.push({ x: yellowDoorPos.x, y: SUBGRIDS[2].start[1] + 1 });
+    tokenPositions.push({ x: yellowDoorPos.x, y: SUBGRIDS[2].start[1] + 2 });
+  } else {
+    // Left or right door: place tokens in the middle row
+    if(Math.floor(yellowDoorPos.x) === SUBGRIDS[2].end[0] ){
+      yellowDirection = "Right";
+    }else{
+      yellowDirection = "Left";
+    }
+    tokenPositions.push({ x: SUBGRIDS[2].start[0], y: yellowDoorPos.y });
+    tokenPositions.push({ x: SUBGRIDS[2].start[0] + 1, y: yellowDoorPos.y });
+    tokenPositions.push({ x: SUBGRIDS[2].start[0] + 2, y: yellowDoorPos.y });
+  }
+
+  tokenPositions.forEach(pos => {
+    const coin = document.createElement("div");
+    coin.classList.add("practice-coin-yellow");
+    coin.style.top = `${pos.y * 32 + 4}px`;
+    coin.style.left = `${pos.x * 32 + 4}px`;
+    container.appendChild(coin);
+  });
+}
+
+function moveYellowPlayer(direction) {
+  const path = yellowPaths[direction]; // Get the path based on the direction
+  let step = 0;
+
+  const yellowPlayerElement = document.querySelector('.practice-yellow-player');
+
+  // Function to move to the next step in the path
+  function moveStep() {
+    if (step < path.length) {
+      const [x, y] = path[step];
+
+      // Update the yellow player's position
+      yellowPlayerElement.style.left = `${x * 32}px`;
+      yellowPlayerElement.style.top = `${y * 32}px`;
+      if(direction === "Up" && x == 11 && y == 2){
+        shuffleDoors(2);
+      }else if(direction === "Down" && x == 11 && y == 4){
+        shuffleDoors(2);
+
+      }else if(direction === "Left" && x == 10 && y == 3){
+        shuffleDoors(2);
+      }else if(direction === "Right" && x == 10 && y == 1){
+
+        shuffleDoors(2);
+      }
+
+      const coins = document.querySelectorAll(".practice-coin-yellow");
+      for (let coin of coins) {
+        const coinX = Math.round(parseInt(coin.style.left) / 32);
+        const coinY = Math.round(parseInt(coin.style.top) / 32);
+    
+        console.log(`Checking coin at (${coinX}, ${coinY}) against player at (${x}, ${y})`);
+    
+    
+        // Check if player's position matches the coin's position
+        if (x === coinX && y === coinY) {
+          coin.remove(); // Remove collected coin
+          console.log(`Collected coin at (${coinX}, ${coinY})`);
+          return true;
+        }
+      }
+
+      step++; // Move to the next step in the path
+    } else {
+      // Stop the interval when the path is complete
+      clearInterval(movementInterval);
+    }
+  }
+
+  // Start moving along the path with a 300ms interval (adjust as needed)
+  const movementInterval = setInterval(moveStep, 300);
+}
+
+
 
 
 let offsetY = 1;
