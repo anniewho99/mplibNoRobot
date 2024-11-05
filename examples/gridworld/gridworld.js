@@ -93,7 +93,7 @@ const instructions = [
   "Each room has doors in different colors, and you can only pass through doors that match your color. Try passing through the blue door to enter a room!",
   "Next, let’s collect some tokens. You can only collect tokens that match your color. Ready to try collecting tokens? Go ahead and collect the three blue tokens in the top left room.",
   "The other player, such as the yellow player on the top right corner, will go collect the yellow coins in the top right room. ",
-  "You will be assigned a new player avatar doing the  "
+  "The other player, such as the yellow player on the top right corner, will go collect the yellow coins in the top right room.  "
 ]
 
 document.getElementById("nextBtn").addEventListener("click", () => {
@@ -108,7 +108,7 @@ document.getElementById("nextBtn").addEventListener("click", () => {
     // Hide the Next button and show the Join button at the end of instructions
     document.getElementById("nextBtn").style.display = "none";
     document.getElementById("joinBtn").style.display = "inline-block";
-    document.getElementById("instructionsMessage").textContent = "Practice complete! Click 'Join Game' to start the real game.";
+    document.getElementById("instructionsMessage").textContent = "Practice complete! You'll now be assigned a new player avatar with a unique color. Click 'Join Game' to enter the waiting room and be paired with another player. ";
   }
 });
 
@@ -135,6 +135,7 @@ function handleInstructionStep(step) {
       break;
     case 5:
       moveYellowPlayer(yellowDirection);
+      document.getElementById("nextBtn").style.display = "none";
   }
 }
 
@@ -525,7 +526,7 @@ let yellowDirection;
 
 const yellowPaths = {
   Left: [[13, 0], [12, 0], [11, 0], [10, 0], [9, 0], [9, 1], [9, 2], [9, 3], [10, 3], [11, 3], [12, 3]],
-  Right: [[13, 0], [12, 0], [12, 1], [12, 2], [12, 3], [11, 3], [10, 3]],
+  Right: [[13, 0], [13, 1], [13, 2], [13, 3],[12, 3], [11, 3], [10, 3]],
   Up: [[13, 0], [12, 0], [11, 0], [11, 1], [11, 2], [11, 3], [11, 4]],
   Down: [[13, 0], [13, 1], [13, 2], [13, 3], [13, 4], [13, 5], [12, 5], [11, 5], [11, 4], [11, 3], [11, 2]]
 };
@@ -619,6 +620,10 @@ function moveYellowPlayer(direction) {
       }
 
       step++; // Move to the next step in the path
+
+      if(step == path.length - 1){
+        document.getElementById("nextBtn").style.display = "inline-block";
+      }
     } else {
       // Stop the interval when the path is complete
       clearInterval(movementInterval);
