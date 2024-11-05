@@ -48,8 +48,8 @@ const studyId = 'gridworld';
 
 // Configuration setting for the session
 let sessionConfig = {
-    minPlayersNeeded: 4, // Minimum number of players needed; if set to 1, there is no waiting room (unless a countdown has been setup)
-    maxPlayersNeeded: 4, // Maximum number of players allowed in a session
+    minPlayersNeeded: 2, // Minimum number of players needed; if set to 1, there is no waiting room (unless a countdown has been setup)
+    maxPlayersNeeded: 2, // Maximum number of players allowed in a session
     maxParallelSessions: 0, // Maximum number of sessions in parallel (if zero, there are no limit)
     allowReplacements: true, // Allow replacing any players who leave an ongoing session?
     exitDelayWaitingRoom: 0, // Number of countdown seconds before leaving waiting room (if zero, player leaves waiting room immediately)
@@ -796,7 +796,7 @@ let playerElements = {};
 let coins = {};
 let coinElements = {};
 let hasEnded = false;
-let roundTime = 40;  // 90 seconds per round
+let roundTime = 90;  // 90 seconds per round
 let breakTime = 5;   // 5-second break between rounds
 let roundInterval = null; // To store the round timer interval
 let isBreakTime = false; 
