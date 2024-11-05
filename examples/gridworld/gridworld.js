@@ -1361,13 +1361,13 @@ async function handleArrowPress(xChange = 0, yChange = 0) {
 function getFilterForColor(color) {
   switch (color) {
     case 'blue':
-      return 'sepia(1) saturate(4000%) hue-rotate(150deg) brightness(0.95) contrast(2)'; // Blue filter
+      return 'sepia(1) saturate(4000%) hue-rotate(160deg) brightness(0.7) contrast(2)'; // Blue filter
     case 'red':
-      return 'sepia(1) saturate(5000%) hue-rotate(293deg) brightness(0.8) contrast(1.9)';  // Red filter
+      return 'sepia(1) saturate(5000%) hue-rotate(293deg) brightness(0.7) contrast(1.9)';  // Red filter
     case 'yellow':
       return 'sepia(1) saturate(4000%) hue-rotate(2deg) brightness(1.2) contrast(1.1)'; // yellow filter
     case 'purple':
-      return 'sepia(1) saturate(27000%) hue-rotate(183deg) brightness(0.63) contrast(2.3)';  // Filter for #8563e0
+      return 'sepia(1) saturate(27000%) hue-rotate(183deg) brightness(0.6) contrast(2.3)';  // Filter for #8563e0
   }
 }
 
@@ -1685,6 +1685,7 @@ function placeDoorsForAllSubgrids() {
 }
 
 async function initGame() {
+    clearTimeout(waitingTimer);
     // Get the id of this player
     playerId = getCurrentPlayerId();
 
@@ -1999,6 +2000,29 @@ function removePlayerState() {
 //   Handle any session change relating to the waiting room or ongoing session 
 // --------------------------------------------------------------------------------------
 
+const MAX_WAITING_TIME = 5 * 60 * 1000; // 5 minutes in milliseconds
+
+let waitingTimer;
+
+// Start the waiting timer
+function startWaitingTimer() {
+  const timeoutId = setTimeout(() => {
+    endSessionDueToTimeout();
+  }, MAX_WAITING_TIME);
+
+  // Clear the timeout if the player joins the game before 5 minutes
+  return timeoutId;
+}
+
+// End session and show a timeout message
+function endSessionDueToTimeout() {
+  // Display a message or navigate to an exit screen
+  alert("The session has timed out. Please try joining again later.");
+  messageWaitingRoom.innerText = "We couldn't find a match for you with other participants at this time. Please close this window and try again later. You'll receive a partial compensation for your time. Thank you for your understanding.";
+  // Redirect or log the player out if necessary
+  // window.location.href = 'exit_page.html'; // Example of redirection
+}
+
 function joinWaitingRoom() {
   /*
       Functionality to invoke when joining a waiting room.
@@ -2009,12 +2033,13 @@ function joinWaitingRoom() {
           - Creates an appropriate message based on players needed and players in waiting room
           - Displays the waiting room screen
   */
+  waitingTimer = startWaitingTimer();
 
   let playerId = getCurrentPlayerId(); // the playerId for this client
   let numPlayers = getNumberCurrentPlayers(); // the current number of players
   let numNeeded = sessionConfig.minPlayersNeeded - numPlayers;
  
-  let str2 = `Waiting for ${ numNeeded } additional ${ numPlayers > 1 ? 'players' : 'player' }...`;
+  let str2 = `We are waiting for ${ numNeeded } additional ${ numPlayers > 1 ? 'players' : 'player' }... Once you join the game, you'll be playing alongside one other player. Each player has their own character, and they’ll be pursuing coins in a different color from yours.`;
   messageWaitingRoom.innerText = str2;
   
   // switch screens from instruction to waiting room
