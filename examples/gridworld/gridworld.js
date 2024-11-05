@@ -876,7 +876,7 @@ function startNewRound() {
       // Add any additional logic to handle trapping, such as removing doors
   }, trapTime * 1000);
   }else{
-    endSession();
+    //endSession();
   }
 
 
@@ -884,6 +884,12 @@ function startNewRound() {
 
 function endRound() {
   isBreakTime = true;
+  if(currentRound + 1 > totalRounds){
+    document.querySelector('.player-info-panel').style.display = 'none';
+    document.querySelector('.timer-container').style.display = 'none';
+    endSession();
+    return;
+  }
   document.querySelector('.player-info-panel').style.display = 'none';
   document.querySelector('.timer-container').style.display = 'none';
   //messageGame.innerText = "Round ended. Next round starts in 5 seconds...";
