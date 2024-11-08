@@ -91,6 +91,7 @@ document.getElementById("consentProceed").addEventListener("click", () => {
       // Hide consent screen and show instructions screen
       document.getElementById("consentDiv").style.display = "none";
       document.getElementById("instructionsScreen").style.display = "block";
+      document.getElementById("joinBtn").style.display = "inline-block";
       
       // Optionally set full-screen mode if required
       document.documentElement.requestFullscreen();
@@ -2039,7 +2040,7 @@ function joinWaitingRoom() {
   let numPlayers = getNumberCurrentPlayers(); // the current number of players
   let numNeeded = sessionConfig.minPlayersNeeded - numPlayers;
  
-  let str2 = `We are waiting for ${ numNeeded } additional ${ numPlayers > 1 ? 'players' : 'player' }... Once you join the game, you'll be playing alongside three other players. Each player has their own character, and they’ll be pursuing coins in a different color from yours.`;
+  let str2 = `We are waiting for ${ numNeeded } additional ${ numPlayers > 1 ? 'players' : 'player' }... Once you join the game, you'll be playing alongside other players. Each player has their own character, and they’ll be pursuing coins in a different color from yours.`;
   messageWaitingRoom.innerText = str2;
   
   // switch screens from instruction to waiting room
