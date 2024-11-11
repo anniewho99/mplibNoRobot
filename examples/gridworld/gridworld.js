@@ -48,8 +48,8 @@ const studyId = 'gridworld';
 
 // Configuration setting for the session
 let sessionConfig = {
-    minPlayersNeeded: 4, // Minimum number of players needed; if set to 1, there is no waiting room (unless a countdown has been setup)
-    maxPlayersNeeded: 4, // Maximum number of players allowed in a session
+    minPlayersNeeded: 2, // Minimum number of players needed; if set to 1, there is no waiting room (unless a countdown has been setup)
+    maxPlayersNeeded: 2, // Maximum number of players allowed in a session
     maxParallelSessions: 0, // Maximum number of sessions in parallel (if zero, there are no limit)
     allowReplacements: true, // Allow replacing any players who leave an ongoing session?
     exitDelayWaitingRoom: 5, // Number of countdown seconds before leaving waiting room (if zero, player leaves waiting room immediately)
@@ -797,7 +797,7 @@ let playerElements = {};
 let coins = {};
 let coinElements = {};
 let hasEnded = false;
-let roundTime = 5;  // 90 seconds per round
+let roundTime = 150;  // 90 seconds per round
 let breakTime = 5;   // 5-second break between rounds
 let roundInterval = null; // To store the round timer interval
 let isBreakTime = false; 
@@ -2237,6 +2237,12 @@ function endSession() {
 
   let err = getSessionError();
 
+  let roundAt = currentRound;
+
+  currentRound = 5;
+
+  const messageFinish = document.getElementById('messageFinish');
+
   if (err.errorCode == 1) {
       // No sessions available
       messageFinish.innerHTML = `<p>Session ended abnormally because there are no available sessions to join</p>`;
@@ -2246,8 +2252,68 @@ function endSession() {
   } else if (err.errorCode==3) {
       // This client is using an incompatible browser
       messageFinish.innerHTML = `<p>Session ended abnormally because you are using the Edge browser which is incompatible with this experiment. Please use Chrome or Firefox</p>`;
-  } else {
-      messageFinish.innerHTML = `<p>You have completed the session.</p>`;
+  } else if(roundAt == totalRounds){
+    document.getElementById('questionnaireForm').style.display = 'block';
+    document.getElementById('messageFinish').innerText = "Thank you for playing! Please complete the questionnaire below. Questions marked with an asterisk (*) are required.";
+
+    document.getElementById('submitQuestionnaire').addEventListener('click', () => {
+      // Collect form data
+      const strategy = document.getElementById('strategy').value;
+      const gameView = document.getElementById('gameView').value;
+      const generalGameView = document.getElementById('generalGameView').value;
+      const noticedStuckPlayer = document.getElementById('noticedStuckPlayer').value;
+      const helpedStuckPlayer = document.getElementById('helpedStuckPlayer').value;
+      const reasonHelped = document.getElementById('reasonHelped').value;
+      const reasonNotHelped = document.getElementById('reasonNotHelped').value;
+      const helpfulnessRating = document.querySelector('input[name="helpfulnessRating"]:checked');
+      const observedHelp = document.getElementById('observedHelp').value;
+      const selfHelpfulness = document.querySelector('input[name="selfHelpfulness"]:checked');
+    
+      // Check if all required fields are filled
+      if (
+        !strategy || !gameView || !generalGameView || !noticedStuckPlayer ||
+        !helpedStuckPlayer || !reasonHelped || !reasonNotHelped ||
+        !helpfulnessRating || !observedHelp || !selfHelpfulness
+      ) {
+        alert("Please fill out all required fields before submitting the questionnaire.");
+        return; // Prevent form submission
+      }
+    
+      // Create an object with the responses
+      let questionnaireResponses = {
+        strategy,
+        gameView,
+        generalGameView,
+        noticedStuckPlayer,
+        helpedStuckPlayer,
+        reasonHelped,
+        reasonNotHelped,
+        helpfulnessRating: helpfulnessRating.value,
+        observedHelp,
+        selfHelpfulness: selfHelpfulness.value
+      };
+    
+      // Path to update the player's data
+      let path = `players/${playerId}`;
+    
+      // Update the player's state with the responses
+      let newState = {
+        responses: questionnaireResponses
+      };
+    
+      updateStateDirect(path, newState); // Function to update state in your database
+    
+      // Optionally, you can display a thank you message or hide the questionnaire
+      document.getElementById('messageFinish').innerText = "Thank you for completing the questionnaire! You will be redirected to Prolific's completion page.";
+      document.getElementById('questionnaireForm').style.display = 'none';
+
+      setTimeout(() => {
+        window.location.href = "https://www.prolific.com";
+      }, 3000); // 3-second delay before redirecting
+    });
+    
+  }else {
+      messageFinish.innerHTML = `<p>The session ended unexpectedly. We apologize for the inconvenience. Please close the window.</p>`;
   }
 }
 
