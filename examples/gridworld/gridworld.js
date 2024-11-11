@@ -76,7 +76,7 @@ let funList = {
 };
 
 // List the node names where we place listeners for any changes to the children of these nodes; set to '' if listening to changes for children of the root
-let listenerPaths = ['coins', 'players', 'doors', 'subgridAssignment'];
+let listenerPaths = ['coins', 'players', 'doors', 'subgridAssignment', 'condition'];
 
 // Set the session configuration for MPLIB
 initializeMPLIB( sessionConfig , studyId , funList, listenerPaths, verbosity );
@@ -662,12 +662,14 @@ let mapData = {
   blockedSpaces: {  },
 };
 
-const trapSchedule = {
-  1: [1],   // Player 1 trapped in round 1 and 2
-  2: [1],
-  3: [2],   // Player 2 trapped in round 3 and 4
-  4: [2],
-}
+// const trapSchedule = {
+//   1: [1],   // Player 1 trapped in round 1 and 2
+//   2: [1],
+//   3: [2],   // Player 2 trapped in round 3 and 4
+//   4: [2],
+// }
+
+let trapSchedule;
 
 
 let subgridPositions = [
@@ -831,6 +833,18 @@ function getPlayerStartingPosition(playerId) {
   return startingPositions[(arrivalIndex-1) % startingPositions.length];
 }
 
+async function fetchTrapSchedule() {
+
+  // // Read the trap schedule from Firebase
+  // readStateDirect(path, (trap) => {
+  //   if (trap) {
+  //     console.log("Trap schedule fetched from Firebase:", trapSchedule);
+  //     trapSchedule = trap;
+  //   }
+  // });
+  trapSchedule= await readState(`condition`);
+  console.log("Trap schedule fetched from Firebase:", trapSchedule);
+}
 
 // Function to start the round timer
 function startRoundTimer() {
@@ -1003,6 +1017,11 @@ async function resetCoinsAndDoors() {
 
 async function initRounds() {
   console.log("Initializing Rounds...");
+
+  if (getCurrentPlayerArrivalIndex() !== 1) {
+    fetchTrapSchedule();
+  }
+
 
   gameScreen.style.display = 'block';
   document.getElementById('roundTitle').innerText = "Current Round will start soon!";
@@ -1801,6 +1820,25 @@ async function initGame() {
             color = "gray"; // Fallback color
     }
 
+    if (getCurrentPlayerArrivalIndex() === 1) {
+      // Define possible trap schedules
+      const trapSchedules = [
+        { 1: [1], 2: [1], 3: [2], 4: [2] },  // First trap schedule
+        { 1: [1], 2: [2], 3: [2], 4: [1] },  // Second trap schedule
+        { 1: [1], 2: [2], 3: [1], 4: [2] }   // Third trap schedule
+      ];
+  
+      // Randomly select one of the trap schedules
+      const randomIndex = Math.floor(Math.random() * trapSchedules.length);
+      trapSchedule = trapSchedules[randomIndex];
+  
+      // Update the trap schedule to Firebase
+      let path = `condition`;
+      updateStateDirect(path, trapSchedule);
+  
+      console.log("Trap schedule set and updated to Firebase:", trapSchedule);
+    }
+
  
     // // Show the player name
     // let str = `You are: ${name}`;
@@ -1994,6 +2032,20 @@ function receiveStateChange(pathNow,nodeName, newState, typeChange ) {
         // For example, updating UI, moving elements, or changing game state
       }
     }
+  }
+
+  if (pathNow === 'trapSchedule') {
+    console.log('Updated trap schedule:', newState);
+  
+    // Directly handle updates to the trapSchedule
+    for (const round in newState) {
+      if (newState.hasOwnProperty(round)) {
+        const trappedPlayers = newState[round];
+        console.log(`Round ${round}: Players trapped - ${trappedPlayers}`);
+      }
+    }
+
+    trapSchedule = newState;
   }
 
 }
