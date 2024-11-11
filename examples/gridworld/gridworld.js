@@ -52,7 +52,7 @@ let sessionConfig = {
     maxPlayersNeeded: 2, // Maximum number of players allowed in a session
     maxParallelSessions: 0, // Maximum number of sessions in parallel (if zero, there are no limit)
     allowReplacements: true, // Allow replacing any players who leave an ongoing session?
-    exitDelayWaitingRoom: 0, // Number of countdown seconds before leaving waiting room (if zero, player leaves waiting room immediately)
+    exitDelayWaitingRoom: 5, // Number of countdown seconds before leaving waiting room (if zero, player leaves waiting room immediately)
     maxHoursSession: 0, // Maximum hours where additional players are still allowed to be added to session (if zero, there is no time limit)
     recordData: true // Record all data?  
 };
@@ -91,7 +91,6 @@ document.getElementById("consentProceed").addEventListener("click", () => {
       // Hide consent screen and show instructions screen
       document.getElementById("consentDiv").style.display = "none";
       document.getElementById("instructionsScreen").style.display = "block";
-      document.getElementById("joinBtn").style.display = "inline-block";
       
       // Optionally set full-screen mode if required
       document.documentElement.requestFullscreen();
@@ -103,12 +102,12 @@ document.getElementById("consentProceed").addEventListener("click", () => {
 // Instructions for each step
 let instructionStep = 0;
 const instructions = [
-  "Welcome! You’ll use the arrow keys to move your character around the grid. Let's start by placing you as the blue character on the top left corner!",
-  "You are now the blue character in the top left corner of the grid, which has four rooms separated by walls and doors",
-  "Each room has doors in different colors, and you can only pass through doors that match your color. Try passing through the blue door to enter a room!",
-  "Next, let’s collect some tokens. You can only collect tokens that match your color. Ready to try collecting tokens? Go ahead and collect the three blue tokens in the top left room.",
-  "The other player, such as the yellow player on the top right corner, will go collect the yellow coins in the top right room. ",
-  "The other player, such as the yellow player on the top right corner, will go collect the yellow coins in the top right room.  "
+  "Welcome! You’ll use the arrow keys to move your character around the grid. Let's start by placing you as the orange character on the top left corner!",
+  "You are now the orange character in the top left corner of the grid, which has four rooms separated by walls and doors",
+  "Each room has doors in different colors, and you can only pass through doors that match your color. Try passing through the orange door to enter a room! Once you enter a room, the door colors will shuffle.",
+  "Next, let’s collect some tokens. You can only collect tokens that match your color. Ready to try collecting tokens? Go ahead and collect the three orange coins in the top left room.",
+  "There are other players in the game, ranging from one to three additional participants. In this example, there is one other player: the yellow player, located in the top right corner. This player’s objective is to collect the yellow coins in the top right room.",
+  "Here, we’re demonstrating what another player might do. Keep in mind that when you start the game, you’ll be playing with real human participants. There is no deception in this study—every player you interact with is a real person. "
 ]
 
 document.getElementById("nextBtn").addEventListener("click", () => {
@@ -123,7 +122,7 @@ document.getElementById("nextBtn").addEventListener("click", () => {
     // Hide the Next button and show the Join button at the end of instructions
     document.getElementById("nextBtn").style.display = "none";
     document.getElementById("joinBtn").style.display = "inline-block";
-    document.getElementById("instructionsMessage").textContent = "Practice complete! You'll now be assigned a new player avatar with a unique color. Click 'Join Game' to enter the waiting room and be paired with three other players. ";
+    document.getElementById("instructionsMessage").textContent = "Practice complete! You'll now be assigned a new player avatar with a unique color. Click 'Join Game' to enter the waiting room and be paired with one other player. ";
   }
 });
 
@@ -138,11 +137,11 @@ function handleInstructionStep(step) {
     case 2:
       removePracticePlayer();
       EnablePlacePracticePlayer();
-      document.getElementById("nextBtn").style.display = "none";
+      document.getElementById("nextBtn").style.visibility = "hidden";
       break;
     case 3:
       placePracticeCoins();  
-      document.getElementById("nextBtn").style.display = "none";
+      document.getElementById("nextBtn").style.visibility = "hidden";
       break;
     case 4:
       placeYellowPlayer();
@@ -150,12 +149,12 @@ function handleInstructionStep(step) {
       break;
     case 5:
       moveYellowPlayer(yellowDirection);
-      document.getElementById("nextBtn").style.display = "none";
+      document.getElementById("nextBtn").style.visibility = "hidden";
   }
 }
 
 function placeYellowPlayer() {
-  const yellowPlayer = { x: GRID_WIDTH - 1, y: 0, color: "yellow" };
+  const yellowPlayer = { x: GRID_WIDTH - 1, y: 0, color: "#61c96f" };
   updatePlayerPosition(yellowPlayer, "yellow"); // Pass "yellow" to use the yellow sprite
   return yellowPlayer;
 }
@@ -204,7 +203,7 @@ function EnablePlacePracticePlayer() {
         // End practice mode when all tokens are collected
         document.removeEventListener("keydown", handlePracticeMovement);
         instructionStep = 4;
-        document.getElementById("nextBtn").style.display = "inline-block";
+        document.getElementById("nextBtn").style.visibility = "visible";
       }
     }
   }
@@ -230,7 +229,7 @@ const insideSubgrids = [
   { startX: 10, startY: 8, endX: 12, endY: 10 } // Bottom-right subgrid area
 ];
 
-const doorColors = ["#6ba2d1", "orange", "yellow", "purple"];
+const doorColors = ["#6ba2d1", "orange", "#61c96f", "purple"];
 
 let blueDoorPositions = [];
 
@@ -306,18 +305,18 @@ function placePracticeDoors() {
       // Door color based on position and define entry/exit points
       switch (pos.side) {
         case "left":
-          door.style.backgroundColor = "#6ba2d1";
+          door.style.backgroundColor = "orange";
           allEntryPoints[subgridIndex] = [{ x: pos.x, y: pos.y }]; 
           allExitPoints[subgridIndex] = [{ x: pos.x - 1, y: pos.y }]; 
-          door.setAttribute("data-color", "#6ba2d1");
-          break;
-        case "right":
-          door.style.backgroundColor = "orange";
           door.setAttribute("data-color", "orange");
           break;
+        case "right":
+          door.style.backgroundColor = "#6ba2d1";
+          door.setAttribute("data-color", "#6ba2d1");
+          break;
         case "top":
-          door.style.backgroundColor = "yellow";
-          door.setAttribute("data-color","yellow");
+          door.style.backgroundColor = "#61c96f";
+          door.setAttribute("data-color","#61c96f");
           break;
         case "bottom":
           door.style.backgroundColor = "purple";
@@ -337,7 +336,7 @@ function placePracticeDoors() {
 // Place three coins inside the subgrid
 function placePracticeCoins() {
   const container = document.getElementById("practiceGameContainer");
-  const coinPositions = [{ x: 2, y: 2 }, { x: 3, y: 2 }, { x: 2, y: 3 }];
+  const coinPositions = [{ x: 2, y: 8 }, { x: 3, y: 8 }, { x: 2, y: 9 }];
 
   coinPositions.forEach(pos => {
     const coin = document.createElement("div");
@@ -442,7 +441,7 @@ function shuffleDoors(subgridIndex) {
     document.getElementById("practiceGameContainer").appendChild(doorElement);
 
     // Update entry and exit points if the door is blue
-    if (color === "#6ba2d1") {
+    if (color === "orange") {
       blueDoorPositions[subgridIndex] = door.position;
       calculateEntryExitPointsForSubgrid(subgridIndex, door.position, door.side);
     }
@@ -478,7 +477,7 @@ function movePracticePlayer(event, player) {
   if (isEnteringFromDoor && subgridIndex !== -1 && instructionStep === 2) {
     console.log(`Entering from door at: (${newX}, ${newY})`);
     instructionStep = 3;
-    document.getElementById("nextBtn").style.display = "inline-block";
+    document.getElementById("nextBtn").style.visibility = "visible";
   }
 
   // Check if the player is within any of the subgrid areas
@@ -547,7 +546,7 @@ const yellowPaths = {
 };
 
 function getYellowDoorInTopRightSubgrid() {
-  const yellowDoor = document.querySelector(`.practice-door[data-subgrid-index="2"][data-color="yellow"]`);
+  const yellowDoor = document.querySelector(`.practice-door[data-subgrid-index="2"][data-color="#61c96f"]`);
   return yellowDoor ? { x: parseInt(yellowDoor.style.left) / 32, y: parseInt(yellowDoor.style.top) / 32 } : null;
 }
 
@@ -637,7 +636,7 @@ function moveYellowPlayer(direction) {
       step++; // Move to the next step in the path
 
       if(step == path.length - 1){
-        document.getElementById("nextBtn").style.display = "inline-block";
+        document.getElementById("nextBtn").style.visibility = "visible";
       }
     } else {
       // Stop the interval when the path is complete
@@ -954,10 +953,13 @@ async function resetCoinsAndDoors() {
 
   // Step 4: Reset doors
   console.log("Resetting doors for all subgrids...");
-  await shuffleAndRedrawDoors(trappedIndex);
+
+  if(getCurrentPlayerArrivalIndex()===1){
+    await shuffleAndRedrawDoors(trappedIndex);
+    placeDoorsForAllSubgrids(); 
+  }
   trappedIndex = 1;
-  trappedPlayer = null;
-  placeDoorsForAllSubgrids();  // Place new doors
+  trappedPlayer = null; // Place new doors
   fetchAndPopulatePlayerInfo();
   startRoundTimer(); 
   document.querySelector('.player-info-panel').style.display = 'block';
@@ -1331,6 +1333,7 @@ async function handleArrowPress(xChange = 0, yChange = 0) {
           updateStateDirect(path, newState);
           // Handle collection logic, possibly placing new coins
           handleCoinCollection(playerId);
+          fetchAndPopulatePlayerInfo();
         } else {
           // Log the failed attempt to collect a mismatched coin
           // console.log(`Player ${playerId} tried to collect a coin of different color.`);
@@ -1342,9 +1345,12 @@ async function handleArrowPress(xChange = 0, yChange = 0) {
       // console.log(`Error retrieving coin data for ${key}:`, error);
     });
 
+    let player = players[playerId];
+
     // Broadcast this new player position to the database
     let path = `players/${playerId}`;
     let newState = {
+      ...player,
       direction: newDirection,
       oldX: oldX,
       oldY: oldY,
@@ -1352,9 +1358,10 @@ async function handleArrowPress(xChange = 0, yChange = 0) {
       y: newY,
       coins: players[playerId].coins,
       isTrapped: players[playerId].isTrapped,
+      roundNumber: currentRound,
+      color: players[playerId].color,
     };
     updateStateDirect(path, newState);
-    fetchAndPopulatePlayerInfo();
   }
 }
 
@@ -1750,6 +1757,7 @@ async function initGame() {
           y,
           coins: 0,
           isTrapped: false,
+          roundNumber: currentRound,
         };
     updateStateDirect(path, newState);
 
@@ -2040,7 +2048,7 @@ function joinWaitingRoom() {
   let numPlayers = getNumberCurrentPlayers(); // the current number of players
   let numNeeded = sessionConfig.minPlayersNeeded - numPlayers;
  
-  let str2 = `We are waiting for ${ numNeeded } additional ${ numPlayers > 1 ? 'players' : 'player' }... Once you join the game, you'll be playing alongside other players. Each player has their own character, and they’ll be pursuing coins in a different color from yours.`;
+  let str2 = `We are waiting for ${ numNeeded } additional ${ numPlayers > 1 ? 'players' : 'player' }... Once you join the game, you'll be playing alongside other players. Remember, your goal is to collect coins that match your color. Each player has their own character and will be collecting coins of a different color.`;
   messageWaitingRoom.innerText = str2;
   
   // switch screens from instruction to waiting room
@@ -2067,7 +2075,7 @@ function updateWaitingRoom() {
   // Waiting Room is full and we can start game
   let [ doCountDown , secondsLeft ] = getWaitRoomInfo();
   if (doCountDown) {
-      let str2 = `Game will start in ${ secondsLeft } seconds...`;
+      let str2 = `Game will start in ${ secondsLeft } seconds... Once you join the game, you'll be playing alongside one other player. Remember, your goal is to collect coins that match your color.`;
       messageWaitingRoom.innerText = str2;
   } else { // Still waiting for more players, update wait count
       let numPlayers = getNumberCurrentPlayers(); // the current number of players
