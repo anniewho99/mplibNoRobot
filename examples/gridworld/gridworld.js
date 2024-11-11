@@ -48,8 +48,8 @@ const studyId = 'gridworld';
 
 // Configuration setting for the session
 let sessionConfig = {
-    minPlayersNeeded: 2, // Minimum number of players needed; if set to 1, there is no waiting room (unless a countdown has been setup)
-    maxPlayersNeeded: 2, // Maximum number of players allowed in a session
+    minPlayersNeeded: 4, // Minimum number of players needed; if set to 1, there is no waiting room (unless a countdown has been setup)
+    maxPlayersNeeded: 4, // Maximum number of players allowed in a session
     maxParallelSessions: 0, // Maximum number of sessions in parallel (if zero, there are no limit)
     allowReplacements: true, // Allow replacing any players who leave an ongoing session?
     exitDelayWaitingRoom: 5, // Number of countdown seconds before leaving waiting room (if zero, player leaves waiting room immediately)
@@ -91,6 +91,7 @@ document.getElementById("consentProceed").addEventListener("click", () => {
       // Hide consent screen and show instructions screen
       document.getElementById("consentDiv").style.display = "none";
       document.getElementById("instructionsScreen").style.display = "block";
+      document.getElementById("joinBtn").style.display = "inline-block";
       
       // Optionally set full-screen mode if required
       document.documentElement.requestFullscreen();
@@ -122,7 +123,7 @@ document.getElementById("nextBtn").addEventListener("click", () => {
     // Hide the Next button and show the Join button at the end of instructions
     document.getElementById("nextBtn").style.display = "none";
     document.getElementById("joinBtn").style.display = "inline-block";
-    document.getElementById("instructionsMessage").textContent = "Practice complete! You'll now be assigned a new player avatar with a unique color. Click 'Join Game' to enter the waiting room and be paired with one other player. ";
+    document.getElementById("instructionsMessage").textContent = "Practice complete! You'll now be assigned a new player avatar with a unique color. Click 'Join Game' to enter the waiting room and be paired with one other player. You will play founr rounds of game, each round of game lasts 2 minutes and 30 seconds. ";
   }
 });
 
@@ -796,7 +797,7 @@ let playerElements = {};
 let coins = {};
 let coinElements = {};
 let hasEnded = false;
-let roundTime = 90;  // 90 seconds per round
+let roundTime = 5;  // 90 seconds per round
 let breakTime = 5;   // 5-second break between rounds
 let roundInterval = null; // To store the round timer interval
 let isBreakTime = false; 
@@ -807,7 +808,7 @@ let introColor;
 let introName;
 
 let currentRound = 0;
-let trapTime = 30; 
+let trapTime = 50; 
 let trapFlag = false;
 
 let totalRounds = 4;
@@ -895,7 +896,40 @@ function endRound() {
   //messageGame.innerText = "Round ended. Next round starts in 5 seconds...";
 
   document.getElementById('roundTitle').innerText = "Round Ended";
-  document.getElementById('roundMessage').innerText = `Next round starts in 5 seconds...\nYou are ${introName}, and you can only collect ${introColor} tokens and go through ${introColor} doors.`;
+  //document.getElementById('roundMessage').innerText = `Next round starts in 5 seconds...\nYou are ${introName}, and you can only collect ${introColor} tokens and go through ${introColor} doors.`;
+
+  const spritePositions = {
+    blue: '0px 0px',      // Adjust these values based on your sprite sheet
+    yellow: '0px -48px',  // Example position for yellow
+    purple: '0px -80px',     // Example position for red
+    red: '0px -16px'    // Example position for green
+  };
+
+  const avatarPosition = spritePositions[introColor.toLowerCase()];
+
+  const avatarDiv = document.createElement('div');
+  avatarDiv.classList.add('player-avatar');
+  avatarDiv.style.background = `url('./images/characters.png') no-repeat ${avatarPosition}`;
+  avatarDiv.style.width = '16px'; // Adjust to match your sprite size
+  avatarDiv.style.height = '16px';
+  avatarDiv.style.display = 'inline-block'; // Ensure the avatar is displayed inline
+
+  const roundMessage = document.getElementById('roundMessage');
+  roundMessage.innerHTML = ''; // Clear previous content
+
+    // Create the first part of the text
+  const textBeforeAvatar = document.createElement('span');
+  textBeforeAvatar.innerText = `You are ${introName} `; // Space added after the name
+
+  // Create the second part of the text
+  const textAfterAvatar = document.createElement('span');
+  textAfterAvatar.innerText = `, and you can only collect ${introColor} tokens and go through ${introColor} doors.`;
+
+  // Append the text and avatar in order
+  roundMessage.appendChild(textBeforeAvatar);
+  roundMessage.appendChild(avatarDiv);
+  roundMessage.appendChild(textAfterAvatar);
+
 
   // Show the overlay
   document.getElementById('breakOverlay').style.visibility = 'visible';
@@ -971,8 +1005,41 @@ async function initRounds() {
   console.log("Initializing Rounds...");
 
   gameScreen.style.display = 'block';
-  document.getElementById('roundTitle').innerText = "Round Starting in 5 seconds.";
-  document.getElementById('roundMessage').innerText = `You are ${introName}, and you can only collect ${introColor} tokens and go through ${introColor} doors.`;
+  document.getElementById('roundTitle').innerText = "Current Round will start soon!";
+  //document.getElementById('roundMessage').innerText = `You are ${introName}, and you can only collect ${introColor} tokens and go through ${introColor} doors.`;
+
+  const spritePositions = {
+    blue: '0px 0px',      // Adjust these values based on your sprite sheet
+    yellow: '0px -48px',  // Example position for yellow
+    purple: '0px -80px',     // Example position for red
+    red: '0px -16px'    // Example position for green
+  };
+
+  const avatarPosition = spritePositions[introColor.toLowerCase()];
+
+  const avatarDiv = document.createElement('div');
+  avatarDiv.classList.add('player-avatar');
+  avatarDiv.style.background = `url('./images/characters.png') no-repeat ${avatarPosition}`;
+  avatarDiv.style.width = '16px'; // Adjust to match your sprite size
+  avatarDiv.style.height = '16px';
+  avatarDiv.style.display = 'inline-block'; // Ensure the avatar is displayed inline
+
+  const roundMessage = document.getElementById('roundMessage');
+  roundMessage.innerHTML = ''; // Clear previous content
+
+    // Create the first part of the text
+  const textBeforeAvatar = document.createElement('span');
+  textBeforeAvatar.innerText = `You are ${introName} `; // Space added after the name
+
+  // Create the second part of the text
+  const textAfterAvatar = document.createElement('span');
+  textAfterAvatar.innerText = `, and you can only collect ${introColor} tokens and go through ${introColor} doors.`;
+
+  // Append the text and avatar in order
+  roundMessage.appendChild(textBeforeAvatar);
+  roundMessage.appendChild(avatarDiv);
+  roundMessage.appendChild(textAfterAvatar);
+
 
   document.getElementById('breakOverlay').style.visibility = 'visible';
   setTimeout(startNewRound, 5000);  // Give players 5 seconds to get ready before the first round
@@ -2043,6 +2110,13 @@ function joinWaitingRoom() {
           - Displays the waiting room screen
   */
   waitingTimer = startWaitingTimer();
+  let waitingTime = 0; // Initialize waiting time in seconds
+  const waitingTimerInterval = setInterval(() => {
+    waitingTime++;
+    const minutes = Math.floor(waitingTime / 60);
+    const seconds = waitingTime % 60;
+    document.getElementById('waitingTimeDisplay').innerText = `Waiting time: ${minutes}m ${seconds}s`;
+  }, 1000)
 
   let playerId = getCurrentPlayerId(); // the playerId for this client
   let numPlayers = getNumberCurrentPlayers(); // the current number of players
