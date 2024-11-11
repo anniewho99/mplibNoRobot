@@ -2,8 +2,16 @@
   box-sizing:border-box;
 }
 
+.wrapper-container {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+
+
 .containertrans {
   height: 1000px;
+  flex: 3;
   text-align: center;
   /*background: rgba(255, 255, 255, 0.1);*/
   padding: 10px;
@@ -13,6 +21,15 @@
   max-width: 740px;
   min-width: 740px;
   /*margin: 20px 0px; */
+}
+
+.right-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end; 
+  padding: 10px;
+  gap: 20px;
 }
 
 .game-container {
@@ -312,7 +329,6 @@ button:active {
 
 /* Player Information Sidebar */
 .player-info-panel {
-  position: absolute;
   top: 10px;           /* Adjust based on your layout */
   right: 20px;         /* Adjust based on your layout */
   width: 310px;        /* Width of the panel */
@@ -364,7 +380,7 @@ button:active {
 
 /* Timer Display Styling */
 .timer-container {
-  position: absolute;
+  width: 270px;
   top: 10px;
   left: 20px; /* Adjust position to your preference */
   font-size: 20px;
