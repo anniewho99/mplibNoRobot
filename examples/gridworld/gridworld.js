@@ -91,7 +91,6 @@ document.getElementById("consentProceed").addEventListener("click", () => {
       // Hide consent screen and show instructions screen
       document.getElementById("consentDiv").style.display = "none";
       document.getElementById("instructionsScreen").style.display = "block";
-      document.getElementById("joinBtn").style.display = "inline-block";
       
       // Optionally set full-screen mode if required
       document.documentElement.requestFullscreen();
