@@ -102,11 +102,11 @@ document.getElementById("consentProceed").addEventListener("click", () => {
 // Instructions for each step
 let instructionStep = 0;
 const instructions = [
-  "Welcome! You’ll use the arrow keys to move your character around the grid. Let's start by placing you as the orange character on the top left corner!",
+  "You’ll use the arrow keys to move your character around the grid. Let's start by placing you as the orange character on the top left corner!",
   "You are now the orange character in the top left corner of the grid, which has four rooms separated by walls and doors",
   "Each room has doors in different colors, and you can only pass through doors that match your color. Try passing through the orange door to enter a room! Once you enter a room, the door colors will shuffle.",
   "Next, let’s collect some tokens. You can only collect tokens that match your color. Ready to try collecting tokens? Go ahead and collect the three orange coins in the top left room.",
-  "There are other players in the game, ranging from one to three additional participants. In this example, there is one other player: the yellow player, located in the top right corner. This player’s objective is to collect the yellow coins in the top right room.",
+  "There are other players in the game, ranging from one to three additional participants. In this example, there is one other player: the green player, located in the top right corner. This player’s objective is to collect the green coins in the top right room.",
   "Here, we’re demonstrating what another player might do. Keep in mind that when you start the game, you’ll be playing with real human participants. There is no deception in this study—every player you interact with is a real person. "
 ]
 
@@ -122,7 +122,7 @@ document.getElementById("nextBtn").addEventListener("click", () => {
     // Hide the Next button and show the Join button at the end of instructions
     document.getElementById("nextBtn").style.display = "none";
     document.getElementById("joinBtn").style.display = "inline-block";
-    document.getElementById("instructionsMessage").textContent = "Practice complete! You'll now be assigned a new player avatar with a unique color. Click 'Join Game' to enter the waiting room and be paired with one other player. You will play founr rounds of game, each round of game lasts 2 minutes and 30 seconds. ";
+    document.getElementById("instructionsMessage").textContent = "Practice complete! You'll now be assigned a new player avatar with a unique color. Click 'Join Game' to enter the waiting room and be paired with one other player. You will play four rounds of game, each round of game lasts 2 minutes and 30 seconds. ";
   }
 });
 
@@ -798,7 +798,7 @@ let playerElements = {};
 let coins = {};
 let coinElements = {};
 let hasEnded = false;
-let roundTime = 150;  // 90 seconds per round
+let roundTime = 90;  // 90 seconds per round
 let breakTime = 5;   // 5-second break between rounds
 let roundInterval = null; // To store the round timer interval
 let isBreakTime = false; 
@@ -809,7 +809,7 @@ let introColor;
 let introName;
 
 let currentRound = 0;
-let trapTime = 50; 
+let trapTime = 20; 
 let trapFlag = false;
 
 let totalRounds = 4;
@@ -966,7 +966,7 @@ async function resetCoinsAndDoors() {
   for (let coinKey in allCoins) {
     if (allCoins[coinKey].id === playerId) {
       let coinPath = `coins/${coinKey}`;
-      await updateStateDirect(coinPath, null);  // Remove only coins with the matching player ID
+      await updateStateDirect(coinPath, null, 'removeCoinForNewRound');  // Remove only coins with the matching player ID
     }
   }
   
@@ -996,7 +996,7 @@ async function resetCoinsAndDoors() {
       coins: 0,
       isTrapped: false,
     };
-    await updateStateDirect(path, newState);
+    await updateStateDirect(path, newState, 'resetPlayerState');
 
   // Step 4: Reset doors
   console.log("Resetting doors for all subgrids...");
@@ -1012,14 +1012,18 @@ async function resetCoinsAndDoors() {
   document.querySelector('.player-info-panel').style.display = 'block';
   document.querySelector('.timer-container').style.display = 'block';
 
+  if (getCurrentPlayerArrivalIndex() !== 1) {
+    fetchTrapSchedule();
+  }
+
 }
 
 async function initRounds() {
   console.log("Initializing Rounds...");
 
-  if (getCurrentPlayerArrivalIndex() !== 1) {
-    fetchTrapSchedule();
-  }
+  // if (getCurrentPlayerArrivalIndex() !== 1) {
+  //   fetchTrapSchedule();
+  // }
 
 
   gameScreen.style.display = 'block';
@@ -1312,7 +1316,7 @@ async function placeTokensInSubgrid(playerId, subgridId) {
       let id = `coins/${getKeyString(x, y)}`;
       let newState = { x, y, color: players[playerId].color, id: playerId };  // Set coin color to match player
 
-      await updateStateDirect(id, newState);  // Save new state in Firebase
+      await updateStateDirect(id, newState, 'placeCoin');  // Save new state in Firebase
       console.log(`Coin placed at (${x}, ${y}) for player ${playerId}`);
 
       placedPositions.add(positionKey);  // Mark this position as used
@@ -1415,7 +1419,7 @@ async function handleArrowPress(xChange = 0, yChange = 0) {
           // Correct path to remove the coin from the state
           let path = `coins/${key}`;
           let newState = null;
-          updateStateDirect(path, newState);
+          updateStateDirect(path, newState, 'removeCoin');
           // Handle collection logic, possibly placing new coins
           handleCoinCollection(playerId);
           fetchAndPopulatePlayerInfo();
@@ -1446,7 +1450,7 @@ async function handleArrowPress(xChange = 0, yChange = 0) {
       roundNumber: currentRound,
       color: players[playerId].color,
     };
-    updateStateDirect(path, newState);
+    updateStateDirect(path, newState, 'playerMovment');
   }
 }
 
@@ -1532,6 +1536,12 @@ async function getDoorAtPosition(x, y, playerColor, playerId) {
 
             // If it's a main entry, shuffle the doors
             if (isMainEntry) {
+
+               if(trapSchedule == null){
+                if (getCurrentPlayerArrivalIndex() !== 1) {
+                  fetchTrapSchedule();
+                }
+              }
               const isPlayerTrapped = trapSchedule[currentRound]?.includes(getCurrentPlayerArrivalIndex() % 4);
               if(isPlayerTrapped && trapFlag === true){
                 let player = players[playerId];
@@ -1540,11 +1550,11 @@ async function getDoorAtPosition(x, y, playerColor, playerId) {
                   ...player,
                   isTrapped: true,
                 };
-                await updateStateDirect(path, newState);
+                await updateStateDirect(path, newState, 'trappedPlayer');
                 console.log("time to trap this player");
                 console.log(players[playerId]);
                 subgridDoors[side].color = "grey";  
-                await updateStateDirect(`doors/${subgridIndex}`, subgridDoors);  // Update Firebase
+                await updateStateDirect(`doors/${subgridIndex}`, subgridDoors, 'trappedDoor');  // Update Firebase
 
                 // Step 2: Update the door visually
                 renderDoor(doorX, doorY, "grey", side, subgridIndex); 
@@ -1552,7 +1562,7 @@ async function getDoorAtPosition(x, y, playerColor, playerId) {
                 trappedIndex = subgridIndex;
                 trappedPlayer = playerId;
                 let updateIndex = Number(trappedIndex) + 1;
-                await updateStateDirect('subgridAssignment/trapped', updateIndex);
+                await updateStateDirect('subgridAssignment/trapped', updateIndex ,'trappedRoom');
 
                 console.log(`Subgrid ${subgridIndex + 1} is now marked as trapped.`);
 
@@ -1581,7 +1591,7 @@ async function getDoorAtPosition(x, y, playerColor, playerId) {
                   // Use update() if you want to update a specific field
                   await updateStateDirect(`players/${trappedPlayer}`, {
                   isTrapped: false
-                  });
+                  }, 'freePlayer');
                   console.log(`Deleted 'trapped' entry from subgridAssignment.`);
                   trapFlag = false;
                   }
@@ -1631,7 +1641,7 @@ async function shuffleAndRedrawDoors(subgridIndex) {
     });
 
     // Store the updated doors in Firebase
-    await updateStateDirect(`doors/${subgridIndex}`, updatedDoors);
+    await updateStateDirect(`doors/${subgridIndex}`, updatedDoors, 'shuffleDoor');
 
     //console.log(`Doors shuffled for subgrid ${subgridIndex}:`, updatedDoors);
 
@@ -1729,7 +1739,7 @@ async function renderAndStoreDoor(x, y, color, side, subgridIndex, shouldStore =
     doorData[side] = { x, y,  doorColor, side };
 
     // Store the door in Firebase
-    await updateStateDirect(doorPath, doorData);
+    await updateStateDirect(doorPath, doorData ,'storeDoor');
   }
 }
 
@@ -1761,7 +1771,7 @@ async function placeDoorsForSubgrid(subgridIndex) {
          side: door.side
        };
      });
-     await updateStateDirect(`doors/${subgridIndex}`, doorsData);
+     await updateStateDirect(`doors/${subgridIndex}`, doorsData, 'storeDoor');
    }
  
    // Render all doors for this subgrid
@@ -1833,7 +1843,7 @@ async function initGame() {
   
       // Update the trap schedule to Firebase
       let path = `condition`;
-      updateStateDirect(path, trapSchedule);
+      updateStateDirect(path, trapSchedule ,'storeCondition');
   
       console.log("Trap schedule set and updated to Firebase:", trapSchedule);
     }
@@ -1863,7 +1873,7 @@ async function initGame() {
           isTrapped: false,
           roundNumber: currentRound,
         };
-    updateStateDirect(path, newState);
+    updateStateDirect(path, newState , 'initPlayer');
 
     arrowUpListener = new KeyPressListener("ArrowUp", () => handleArrowPress(0, -1));
     arrowDownListener = new KeyPressListener("ArrowDown", () => handleArrowPress(0, 1));
@@ -2033,7 +2043,7 @@ function receiveStateChange(pathNow,nodeName, newState, typeChange ) {
     }
   }
 
-  if (pathNow === 'trapSchedule') {
+  if (pathNow === 'condition') {
     console.log('Updated trap schedule:', newState);
   
     // Directly handle updates to the trapSchedule
@@ -2044,7 +2054,7 @@ function receiveStateChange(pathNow,nodeName, newState, typeChange ) {
       }
     }
 
-    trapSchedule = newState;
+    //trapSchedule = newState;
   }
 
 }
@@ -2120,7 +2130,7 @@ function removePlayerState() {
   // Send a null state to this player in the database, which removes the database entry
   let path = `players/${getCurrentPlayerId()}`;
   let newState = null;
-  updateStateDirect( path, newState);
+  updateStateDirect( path, newState, 'removePlayer');
 }
 
 // --------------------------------------------------------------------------------------
@@ -2352,7 +2362,7 @@ function endSession() {
         responses: questionnaireResponses
       };
     
-      updateStateDirect(path, newState); // Function to update state in your database
+      updateStateDirect(path, newState, 'endQuestoions'); // Function to update state in your database
     
       // Optionally, you can display a thank you message or hide the questionnaire
       document.getElementById('messageFinish').innerText = "Thank you for completing the questionnaire! You will be redirected to Prolific's completion page.";
