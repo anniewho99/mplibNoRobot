@@ -107,7 +107,7 @@ const instructions = [
   "Each room has doors in different colors, and you can only pass through doors that match your color. Try passing through the orange door to enter a room! Once you enter a room, the door colors will shuffle.",
   "Next, let’s collect some tokens. You can only collect tokens that match your color. Ready to try collecting tokens? Go ahead and collect the three orange coins in the top left room.",
   "There are other players in the game, ranging from one to three additional participants. In this example, there is one other player: the green player, located in the top right corner. This player’s objective is to collect the green coins in the top right room.",
-  "Here, we’re demonstrating what another player might do. Keep in mind that when you start the game, you’ll be playing with real human participants. There is no deception in this study—every player you interact with is a real person. "
+  "Here, we’re demonstrating what another player might do. Keep in mind that when you start the game, you’ll be playing with real human participants. "
 ]
 
 document.getElementById("nextBtn").addEventListener("click", () => {
@@ -938,6 +938,12 @@ function endRound() {
   const textAfterAvatar = document.createElement('span');
   textAfterAvatar.innerText = `, and you can only collect ${introColor} tokens and go through ${introColor} doors.`;
 
+  if (currentRound >= 1) {
+    const roundCompletionMessage = document.createElement('p');
+    roundCompletionMessage.innerText = `This completes round ${currentRound} of 4. Waiting 10 seconds before starting the next round.`;
+    roundMessage.appendChild(roundCompletionMessage);
+  }
+
   // Append the text and avatar in order
   roundMessage.appendChild(textBeforeAvatar);
   roundMessage.appendChild(avatarDiv);
@@ -946,6 +952,10 @@ function endRound() {
 
   // Show the overlay
   document.getElementById('breakOverlay').style.visibility = 'visible';
+
+  if(currentRound >= 1){
+    breakTime = 10;
+  }
   
   // Start a 5-second break
   setTimeout(() => {
@@ -1450,7 +1460,7 @@ async function handleArrowPress(xChange = 0, yChange = 0) {
       roundNumber: currentRound,
       color: players[playerId].color,
     };
-    updateStateDirect(path, newState, 'playerMovment');
+    updateStateDirect(path, newState, 'playerMovement');
   }
 }
 
@@ -2365,7 +2375,7 @@ function endSession() {
         responses: questionnaireResponses
       };
     
-      updateStateDirect(path, newState, 'endQuestoions'); // Function to update state in your database
+      updateStateDirect(path, newState, 'endQuestions'); // Function to update state in your database
     
       // Optionally, you can display a thank you message or hide the questionnaire
       document.getElementById('messageFinish').innerText = "Thank you for completing the questionnaire! You will be redirected to Prolific's completion page.";

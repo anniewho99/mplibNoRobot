@@ -565,3 +565,22 @@ button:active {
   display: inline-block; /* Make the labels inline */
   margin-right: 10px; /* Add some spacing between the radio buttons */
 }
+
+#messageFinish {
+  margin-bottom: 20px;
+}
+
+#questionnaireForm {
+  max-height: 400px; /* Adjust height as needed */
+  overflow-y: auto;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+#questionnaireForm label, 
+#questionnaireForm div, 
+#questionnaireForm textarea {
+  margin-top: 20px;
+  display: block;
+}
