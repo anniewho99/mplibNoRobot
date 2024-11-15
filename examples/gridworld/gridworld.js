@@ -798,7 +798,7 @@ let playerElements = {};
 let coins = {};
 let coinElements = {};
 let hasEnded = false;
-let roundTime = 90;  // 90 seconds per round
+let roundTime = 150;  // 90 seconds per round
 let breakTime = 5;   // 5-second break between rounds
 let roundInterval = null; // To store the round timer interval
 let isBreakTime = false; 
@@ -809,7 +809,7 @@ let introColor;
 let introName;
 
 let currentRound = 0;
-let trapTime = 20; 
+let trapTime = 50; 
 let trapFlag = false;
 
 let totalRounds = 4;
@@ -2320,15 +2320,16 @@ function endSession() {
     document.getElementById('submitQuestionnaire').addEventListener('click', () => {
       // Collect form data
       const strategy = document.getElementById('strategy').value;
-      const gameView = document.getElementById('gameView').value;
-      const generalGameView = document.getElementById('generalGameView').value;
-      const noticedStuckPlayer = document.getElementById('noticedStuckPlayer').value;
-      const helpedStuckPlayer = document.getElementById('helpedStuckPlayer').value;
+      const gameView = document.querySelector('input[name="gameView"]:checked').value;
+      const generalGameView = document.querySelector('input[name="generalGameView"]:checked').value;
+      const noticedStuckPlayer = document.querySelector('input[name="noticedStuckPlayer"]:checked').value;
+      const helpedStuckPlayer = document.querySelector('input[name="helpedStuckPlayer"]:checked').value;
       const reasonHelped = document.getElementById('reasonHelped').value;
       const reasonNotHelped = document.getElementById('reasonNotHelped').value;
-      const helpfulnessRating = document.querySelector('input[name="helpfulnessRating"]:checked');
-      const observedHelp = document.getElementById('observedHelp').value;
-      const selfHelpfulness = document.querySelector('input[name="selfHelpfulness"]:checked');
+      const helpfulnessRating = document.querySelector('input[name="helpfulnessRating"]:checked').value;
+      const observedHelp = document.querySelector('input[name="observedHelp"]:checked').value;
+      const selfHelpfulness = document.querySelector('input[name="selfHelpfulness"]:checked').value;  
+      const suggestions = document.getElementById('suggestions').value;    
     
       // Check if all required fields are filled
       if (
@@ -2349,9 +2350,10 @@ function endSession() {
         helpedStuckPlayer,
         reasonHelped,
         reasonNotHelped,
-        helpfulnessRating: helpfulnessRating.value,
+        helpfulnessRating, 
         observedHelp,
-        selfHelpfulness: selfHelpfulness.value
+        selfHelpfulness, 
+        suggestions
       };
     
       // Path to update the player's data

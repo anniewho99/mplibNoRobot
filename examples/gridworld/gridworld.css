@@ -541,5 +541,27 @@ button:active {
   margin-right: 10px; /* Add some spacing between the radio buttons */
 }
 
+#helpedStuckPlayer label {
+  display: inline-block; /* Make the labels inline */
+  margin-right: 10px; /* Add some spacing between the radio buttons */
+}
 
+#noticedStuckPlayer label {
+  display: inline-block; /* Make the labels inline */
+  margin-right: 10px; /* Add some spacing between the radio buttons */
+}
 
+#generalGameView label {
+  display: inline-block; /* Make the labels inline */
+  margin-right: 10px; /* Add some spacing between the radio buttons */
+}
+
+#gameView label {
+  display: inline-block; /* Make the labels inline */
+  margin-right: 10px; /* Add some spacing between the radio buttons */
+}
+
+#observedHelp label {
+  display: inline-block; /* Make the labels inline */
+  margin-right: 10px; /* Add some spacing between the radio buttons */
+}
