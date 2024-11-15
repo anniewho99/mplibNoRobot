@@ -2158,6 +2158,7 @@ function endSessionDueToTimeout() {
   messageWaitingRoom.innerText = "We couldn't find a match for you with other participants at this time. Please close this window and try again later. You'll receive a partial compensation for your time. Thank you for your understanding.";
   // Redirect or log the player out if necessary
   // window.location.href = 'exit_page.html'; // Example of redirection
+  endSession();
 }
 
 function joinWaitingRoom() {
