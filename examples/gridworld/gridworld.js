@@ -2330,6 +2330,7 @@ function endSession() {
 
     document.getElementById('submitQuestionnaire').addEventListener('click', () => {
       // Collect form data
+      const prolificID = document.getElementById('prolificID').value;
       const strategy = document.getElementById('strategy').value;
       const gameView = document.querySelector('input[name="gameView"]:checked').value;
       const generalGameView = document.querySelector('input[name="generalGameView"]:checked').value;
@@ -2344,7 +2345,7 @@ function endSession() {
     
       // Check if all required fields are filled
       if (
-        !strategy || !gameView || !generalGameView || !noticedStuckPlayer ||
+        !prolificID || !strategy || !gameView || !generalGameView || !noticedStuckPlayer ||
         !helpedStuckPlayer || !reasonHelped || !reasonNotHelped ||
         !helpfulnessRating || !observedHelp || !selfHelpfulness
       ) {
@@ -2354,6 +2355,7 @@ function endSession() {
     
       // Create an object with the responses
       let questionnaireResponses = {
+        prolificID,
         strategy,
         gameView,
         generalGameView,
@@ -2382,7 +2384,7 @@ function endSession() {
       document.getElementById('questionnaireForm').style.display = 'none';
 
       setTimeout(() => {
-        window.location.href = "https://www.prolific.com";
+        window.location.href = "https://app.prolific.com/submissions/complete?cc=CTJVWB8O";
       }, 3000); // 3-second delay before redirecting
     });
     
