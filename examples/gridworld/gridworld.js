@@ -1005,6 +1005,7 @@ async function resetCoinsAndDoors() {
       oldY: player.y,
       coins: 0,
       isTrapped: false,
+      roundNumber: currentRound,
     };
     await updateStateDirect(path, newState, 'resetPlayerState');
 
@@ -1600,7 +1601,7 @@ async function getDoorAtPosition(x, y, playerColor, playerId) {
                   delete subgridAssignments['trapped'];
                   // Use update() if you want to update a specific field
                   await updateStateDirect(`players/${trappedPlayer}`, {
-                  isTrapped: false
+                  isTrapped: false, roundNumber: currentRound,
                   }, 'freePlayer');
                   console.log(`Deleted 'trapped' entry from subgridAssignment.`);
                   trapFlag = false;
