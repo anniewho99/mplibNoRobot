@@ -901,7 +901,7 @@ function endRound() {
   if(currentRound + 1 > totalRounds){
     document.querySelector('.player-info-panel').style.display = 'none';
     document.querySelector('.timer-container').style.display = 'none';
-    endSession();
+    leaveSession();
     return;
   }
   document.querySelector('.player-info-panel').style.display = 'none';
