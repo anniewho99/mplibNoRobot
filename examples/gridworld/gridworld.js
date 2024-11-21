@@ -51,7 +51,7 @@ let sessionConfig = {
     minPlayersNeeded: 2, // Minimum number of players needed; if set to 1, there is no waiting room (unless a countdown has been setup)
     maxPlayersNeeded: 2, // Maximum number of players allowed in a session
     maxParallelSessions: 0, // Maximum number of sessions in parallel (if zero, there are no limit)
-    allowReplacements: true, // Allow replacing any players who leave an ongoing session?
+    allowReplacements: false, // Allow replacing any players who leave an ongoing session?
     exitDelayWaitingRoom: 5, // Number of countdown seconds before leaving waiting room (if zero, player leaves waiting room immediately)
     maxHoursSession: 0, // Maximum hours where additional players are still allowed to be added to session (if zero, there is no time limit)
     recordData: true // Record all data?  
@@ -122,7 +122,7 @@ document.getElementById("nextBtn").addEventListener("click", () => {
     // Hide the Next button and show the Join button at the end of instructions
     document.getElementById("nextBtn").style.display = "none";
     document.getElementById("joinBtn").style.display = "inline-block";
-    document.getElementById("instructionsMessage").textContent = "Practice complete! You'll now be assigned a new player avatar with a unique color. Click 'Join Game' to enter the waiting room and be paired with one other player. You will play four rounds of game, each round of game lasts 2 minutes and 30 seconds. ";
+    document.getElementById("instructionsMessage").textContent = "Practice complete! You'll now be assigned a new player avatar with a unique color. Click 'Join Game' to enter the waiting room and be paired with two other players. You will play four rounds of game, each round of game lasts 2 minutes and 30 seconds. ";
   }
 });
 
@@ -1457,7 +1457,6 @@ async function handleArrowPress(xChange = 0, yChange = 0) {
       x: newX,
       y: newY,
       coins: players[playerId].coins,
-      isTrapped: players[playerId].isTrapped,
       roundNumber: currentRound,
       color: players[playerId].color,
     };
@@ -2222,7 +2221,7 @@ function updateWaitingRoom() {
   // Waiting Room is full and we can start game
   let [ doCountDown , secondsLeft ] = getWaitRoomInfo();
   if (doCountDown) {
-      let str2 = `Game will start in ${ secondsLeft } seconds... Once you join the game, you'll be playing alongside one other player. Remember, your goal is to collect coins that match your color.`;
+      let str2 = `Game will start in ${ secondsLeft } seconds... Once you join the game, you'll be playing alongside two other players. Remember, your goal is to collect coins that match your color.`;
       messageWaitingRoom.innerText = str2;
   } else { // Still waiting for more players, update wait count
       let numPlayers = getNumberCurrentPlayers(); // the current number of players
