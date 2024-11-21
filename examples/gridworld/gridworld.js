@@ -76,7 +76,7 @@ let funList = {
 };
 
 // List the node names where we place listeners for any changes to the children of these nodes; set to '' if listening to changes for children of the root
-let listenerPaths = ['coins', 'players', 'doors', 'subgridAssignment', 'condition'];
+let listenerPaths = ['coins', 'players', 'doors', 'subgridAssignment', 'condition', 'trappedPlayer'];
 
 // Set the session configuration for MPLIB
 initializeMPLIB( sessionConfig , studyId , funList, listenerPaths, verbosity );
@@ -1571,6 +1571,10 @@ async function getDoorAtPosition(x, y, playerColor, playerId) {
                 trapFlag = 'used';
                 trappedIndex = subgridIndex;
                 trappedPlayer = playerId;
+
+                let Trappath = `trappedPlayer`;
+                let TrappedState = playerId;
+                await updateStateDirect(Trappath, TrappedState, 'trappedPlayer');
                 let updateIndex = Number(trappedIndex) + 1;
                 await updateStateDirect('subgridAssignment/trapped', updateIndex ,'trappedRoom');
 
@@ -1583,15 +1587,7 @@ async function getDoorAtPosition(x, y, playerColor, playerId) {
                   trappedIndex = Number(trappedIndex) - 1;
                   if(trappedIndex){
                     trapFlag = 'used';
-                    let players = await readState('players')
-                    Object.keys(players).forEach(playerId => {
-                      const player = players[playerId];
-                    
-                      if (player.isTrapped) {
-                        console.log(`Player ${playerId} is trapped.`);
-                        trappedPlayer = playerId;
-                      }
-                    });
+                    trappedPlayer = await readState('trappedPlayer');
                   }
                 }
                 if (Number(subgridIndex) ===  Number(trappedIndex) && trapFlag === 'used' && trappedPlayer != null) {
@@ -2065,6 +2061,11 @@ function receiveStateChange(pathNow,nodeName, newState, typeChange ) {
     }
 
     //trapSchedule = newState;
+  }
+
+  if(pathNow === "trappedPlayer" && (typeChange == 'onChildAdded' ||typeChange == 'onChildChanged')){
+    trappedPlayer = newState;
+    console.log('trappedPlayer is:', newState);
   }
 
 }
