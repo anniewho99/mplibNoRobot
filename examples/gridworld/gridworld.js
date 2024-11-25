@@ -81,6 +81,9 @@ let listenerPaths = ['coins', 'players', 'doors', 'subgridAssignment', 'conditio
 // Set the session configuration for MPLIB
 initializeMPLIB( sessionConfig , studyId , funList, listenerPaths, verbosity );
 
+const paramsHRI = new URLSearchParams(window.location.search);
+const writeToTryoutData = paramsHRI.get('noInsturction');
+
 // -------------------------------------
 //       Game Globals
 // -------------------------------------
@@ -91,6 +94,9 @@ document.getElementById("consentProceed").addEventListener("click", () => {
       // Hide consent screen and show instructions screen
       document.getElementById("consentDiv").style.display = "none";
       document.getElementById("instructionsScreen").style.display = "block";
+      if(writeToTryoutData){
+        document.getElementById("joinBtn").style.display = "inline-block";
+      }
       
       // Optionally set full-screen mode if required
       document.documentElement.requestFullscreen();
@@ -1016,7 +1022,7 @@ async function resetCoinsAndDoors() {
     await shuffleAndRedrawDoors(trappedIndex);
     placeDoorsForAllSubgrids(); 
   }
-  trappedIndex = 1;
+  trappedIndex = null;
   trappedPlayer = null; // Place new doors
   fetchAndPopulatePlayerInfo();
   startRoundTimer(); 
@@ -2064,7 +2070,7 @@ function receiveStateChange(pathNow,nodeName, newState, typeChange ) {
   }
 
   if(pathNow === "trappedPlayer" && (typeChange == 'onChildAdded' ||typeChange == 'onChildChanged')){
-    trappedPlayer = newState;
+    // trappedPlayer = newState;
     console.log('trappedPlayer is:', newState);
   }
 
