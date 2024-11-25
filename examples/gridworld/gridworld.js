@@ -1582,7 +1582,7 @@ async function getDoorAtPosition(x, y, playerColor, playerId) {
 
               }else{
                 console.log(`Main entry detected at door (${doorX}, ${doorY}). Shuffling doors for subgrid ${subgridIndex}.`);
-                if(trapFlag === true){
+                if(trappedPlayer === null){
                   trappedIndex = await readState("subgridAssignment/trapped");
                   trappedIndex = Number(trappedIndex) - 1;
                   if(trappedPlayer === null){
