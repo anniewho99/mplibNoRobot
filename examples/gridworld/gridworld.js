@@ -1012,7 +1012,7 @@ async function resetCoinsAndDoors() {
   // Step 4: Reset doors
   console.log("Resetting doors for all subgrids...");
 
-  if(getCurrentPlayerArrivalIndexStable()===1){
+  if(getCurrentPlayerArrivalIndex() ===1){
     await shuffleAndRedrawDoors(trappedIndex);
     placeDoorsForAllSubgrids(); 
   }
@@ -1023,7 +1023,7 @@ async function resetCoinsAndDoors() {
   document.querySelector('.player-info-panel').style.display = 'block';
   document.querySelector('.timer-container').style.display = 'block';
 
-  if (getCurrentPlayerArrivalIndexStable() !== 1) {
+  if (getCurrentPlayerArrivalIndex() !== 1) {
     fetchTrapSchedule();
   }
 
@@ -1548,11 +1548,11 @@ async function getDoorAtPosition(x, y, playerColor, playerId) {
             if (isMainEntry) {
 
                if(trapSchedule == null){
-                if (getCurrentPlayerArrivalIndexStable() !== 1) {
+                if (getCurrentPlayerArrivalIndex() !== 1) {
                   fetchTrapSchedule();
                 }
               }
-              const isPlayerTrapped = trapSchedule[currentRound]?.includes(getCurrentPlayerArrivalIndexStable() % 4);
+              const isPlayerTrapped = trapSchedule[currentRound]?.includes(getCurrentPlayerArrivalIndex() % 4);
               if(isPlayerTrapped && trapFlag === true){
                 let player = players[playerId];
                 let path = `players/${playerId}`;
@@ -1815,7 +1815,7 @@ async function initGame() {
     // let color = await assignUniqueColor(); // Get a unique color for the player
     // if (!color) return; // Exit if no color is available
 
-    let arrivalIndex = getCurrentPlayerArrivalIndexStable() % 4;
+    let arrivalIndex = getCurrentPlayerArrivalIndex() % 4;
     let color;
 
     switch (arrivalIndex) {
@@ -1835,7 +1835,7 @@ async function initGame() {
             color = "gray"; // Fallback color
     }
 
-    if (getCurrentPlayerArrivalIndexStable() === 1) {
+    if (getCurrentPlayerArrivalIndex() === 1) {
       // Define possible trap schedules
       const trapSchedules = [
         { 1: [1], 2: [1], 3: [2], 4: [2] },  // First trap schedule
@@ -2259,7 +2259,7 @@ async function startSession() {
   waitingRoomScreen.style.display = 'none';
   gameScreen.style.display = 'none';
   
-  let playerId = getCurrentPlayerId(); // the playerId for this clientgetCurrentPlayerStable()
+  let playerId = getCurrentPlayerId(); // the playerId for this client getCurrentPlayerArrivalIndex()
   let dateString = timeStr(getPlayerInfo( playerId ).sessionStartedAt);
   let str = `Started game with session id ${getSessionId()} with ${getNumberCurrentPlayers()} players at ${dateString}.`;
   myconsolelog( str );
