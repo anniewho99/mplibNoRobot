@@ -26,7 +26,7 @@ import {
   hasControl,
   readState,
   getCurrentPlayerId, getCurrentPlayerIds, getAllPlayerIds, getPlayerInfo,getNumberCurrentPlayers,getNumberAllPlayers,
-  getCurrentPlayerArrivalIndex, getCurrentPlayerArrivalIndexStable, getSessionId,anyPlayerTerminatedAbnormally,getSessionError,getWaitRoomInfo
+  getCurrentPlayerArrivalIndex, getCurrentPlayerArrivalIndexStable, getSessionId,getSessionError,getWaitRoomInfo
 } from "/mplib/src/mplib.js";
 
 // -------------------------------------
@@ -82,7 +82,13 @@ let listenerPaths = ['coins', 'players', 'doors', 'subgridAssignment', 'conditio
 initializeMPLIB( sessionConfig , studyId , funList, listenerPaths, verbosity );
 
 const paramsHRI = new URLSearchParams(window.location.search);
-const writeToTryoutData = paramsHRI.get('noInsturction');
+const writeToTryoutData = paramsHRI.get('noinstruction');
+
+if(writeToTryoutData){
+  document.getElementById("consentDiv").style.display = "none";
+  document.getElementById("instructionsScreen").style.display = "block";
+  document.getElementById("joinBtn").style.display = "inline-block";
+}
 
 // -------------------------------------
 //       Game Globals
@@ -94,9 +100,6 @@ document.getElementById("consentProceed").addEventListener("click", () => {
       // Hide consent screen and show instructions screen
       document.getElementById("consentDiv").style.display = "none";
       document.getElementById("instructionsScreen").style.display = "block";
-      if(writeToTryoutData){
-        document.getElementById("joinBtn").style.display = "inline-block";
-      }
       
       // Optionally set full-screen mode if required
       document.documentElement.requestFullscreen();
@@ -824,8 +827,8 @@ let trappedIndex = 1;
 
 let trappedPlayer;
 
-function getPlayerStartingPosition(playerId) {
-  const arrivalIndex = getCurrentPlayerArrivalIndex(playerId);
+function getPlayerStartingPosition() {
+  const arrivalIndex = getCurrentPlayerArrivalIndex();
 
   // Define starting positions based on arrival index
   const startingPositions = [
@@ -991,7 +994,7 @@ async function resetCoinsAndDoors() {
   // // Step 2: Move all players to starting position
 
   let player = players[playerId];
-  const { x, y } = getPlayerStartingPosition(playerId);
+  const { x, y } = getPlayerStartingPosition();
 
   let startX = x;
   let startY = y;
@@ -2341,7 +2344,10 @@ function endSession() {
   } else if (err.errorCode==3) {
       // This client is using an incompatible browser
       messageFinish.innerHTML = `<p>Session ended abnormally because you are using the Edge browser which is incompatible with this experiment. Please use Chrome or Firefox</p>`;
-  } else if(roundAt == totalRounds){
+  } if (err.errorCode == 4) {
+    // Another player closed their window or were disconnected prematurely
+    messageFinish.innerHTML = `<p>Session ended abnormally because another player closed their window or was disconnected</p>`;
+  }else if(roundAt == totalRounds){
     document.getElementById('questionnaireForm').style.display = 'block';
     document.getElementById('messageFinish').innerText = "Thank you for playing! Please complete the questionnaire below. Questions marked with an asterisk (*) are required.";
 
