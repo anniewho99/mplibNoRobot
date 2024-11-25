@@ -1023,8 +1023,10 @@ async function resetCoinsAndDoors() {
     placeDoorsForAllSubgrids(); 
   }
   trappedPlayer = null; // Place new doors
-  await updateStateDirect("subgridAssignment/trapped", null, 'remove trappedGrid for new Round');
-  await updateStateDirect("trappedPlayer", null, 'remove trapped Player for new Round');
+  if(currentRound > 1){
+    await updateStateDirect("subgridAssignment/trapped", null, 'remove trappedGrid for new Round');
+    await updateStateDirect("trappedPlayer", null, 'remove trapped Player for new Round');
+  }
   fetchAndPopulatePlayerInfo();
   startRoundTimer(); 
   document.querySelector('.player-info-panel').style.display = 'block';
