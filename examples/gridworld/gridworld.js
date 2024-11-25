@@ -1022,8 +1022,9 @@ async function resetCoinsAndDoors() {
     await shuffleAndRedrawDoors(trappedIndex);
     placeDoorsForAllSubgrids(); 
   }
-  trappedIndex = null;
   trappedPlayer = null; // Place new doors
+  await updateStateDirect("subgridAssignment/trapped", null, 'remove trappedGrid for new Round');
+  await updateStateDirect("trappedPlayer", null, 'remove trapped Player for new Round');
   fetchAndPopulatePlayerInfo();
   startRoundTimer(); 
   document.querySelector('.player-info-panel').style.display = 'block';
@@ -1588,23 +1589,30 @@ async function getDoorAtPosition(x, y, playerColor, playerId) {
 
               }else{
                 console.log(`Main entry detected at door (${doorX}, ${doorY}). Shuffling doors for subgrid ${subgridIndex}.`);
-                if(trappedPlayer === null){
+                if(trappedPlayer === null && trapFlag === true){
                   trappedIndex = await readState("subgridAssignment/trapped");
                   trappedIndex = Number(trappedIndex) - 1;
-                  if(trappedPlayer === null){
-                    trappedPlayer = await readState('trappedPlayer');
+                  trappedPlayer = await readState('trappedPlayer');
+                  if(trappedPlayer !== null){
                     trapFlag = 'used';
                   }
                 }
                 if (Number(subgridIndex) ===  Number(trappedIndex) && trapFlag === 'used' && trappedPlayer != null) {
-                  console.log(`Conditions met for freeing subgrid ${subgridIndex + 1}.`);
-                  let subgridAssignments = await readState('subgridAssignment');
-                  delete subgridAssignments['trapped'];
-                  // Use update() if you want to update a specific field
-                  await updateStateDirect(`players/${trappedPlayer}`, {
-                  isTrapped: false, roundNumber: currentRound,
-                  }, 'freePlayer');
-                  console.log(`Deleted 'trapped' entry from subgridAssignment.`);
+
+                  let stillTrapped = await readState('trappedPlayer');
+                  if(stillTrapped != null){
+                    console.log(`Conditions met for freeing subgrid ${subgridIndex + 1}.`);
+                    //let subgridAssignments = await readState('subgridAssignment');
+                    // delete subgridAssignments['trapped'];
+                    // Use update() if you want to update a specific field
+                    await updateStateDirect(`players/${trappedPlayer}`, {
+                    isTrapped: false, roundNumber: currentRound,
+                    }, 'freePlayer');
+                    await updateStateDirect("subgridAssignment/trapped", null, 'remove trappedGrid');
+                    await updateStateDirect("trappedPlayer", null, 'remove trapped Player');
+                    console.log(`Deleted 'trapped' entry from subgridAssignment.`);
+
+                  }
                   trapFlag = false;
                   }
              
