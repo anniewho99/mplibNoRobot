@@ -39,10 +39,10 @@ const studyId = 'skeleton';
 
 // Configuration setting for the session
 let sessionConfig = {
-    minPlayersNeeded: 2, // Minimum number of players needed; if set to 1, there is no waiting room (unless a countdown has been setup)
+    minPlayersNeeded: 3, // Minimum number of players needed; if set to 1, there is no waiting room (unless a countdown has been setup)
     maxPlayersNeeded: 3, // Maximum number of players allowed in a session
     maxParallelSessions: 0, // Maximum number of sessions in parallel (if zero, there are no limit)
-    allowReplacements: true, // Allow replacing any players who leave an ongoing session?
+    allowReplacements: false, // Allow replacing any players who leave an ongoing session?
     exitDelayWaitingRoom: 0, // Number of countdown seconds before leaving waiting room (if zero, player leaves waiting room immediately)
     maxHoursSession: 0, // Maximum hours where additional players are still allowed to be added to session (if zero, there is no time limit)
     recordData: false // Record all data?  
@@ -212,13 +212,16 @@ function startSession() {
     for (let i=0; i<numPlayers; i++) {
         let playerNow = playerIds[i];
         let playerInfo = getPlayerInfo( playerNow );
-        str2 += `<br>Arrival #${playerInfo.arrivalIndex},  ID: ${playerNow} ${ playerId===playerNow ? '(you)' : '' }`;
+        str2 += `<br>`;
+        if (playerId===playerNow) str2 += `<b>`;
+        str2 += `Rank among active #${playerInfo.arrivalIndexActivePlayers}, Stable Index  #${playerInfo.arrivalIndexActivePlayersStable}, ID: ${playerNow} ${ playerId===playerNow ? '(you)' : '' }`;
+        if (playerId===playerNow) str2 += `</b>`;
     }
     str2 += `</p>`;
 
     let allPlayersEver = getAllPlayerIds();
     let numPlayersEver = getNumberAllPlayers();
-    str2 += `<p>History of players ever joined this session (${numPlayersEver} total):`;
+    str2 += `<p>History of players that ever joined this session or waiting room (${numPlayersEver} total):`;
     for (let i=0; i<numPlayersEver; i++) {
         let playerNow = allPlayersEver[i];
         let playerInfo = getPlayerInfo( playerNow );
@@ -263,13 +266,16 @@ function updateOngoingSession() {
     for (let i=0; i<numPlayers; i++) {
         let playerNow = playerIds[i];
         let playerInfo = getPlayerInfo( playerNow );
-        str2 += `<br>Arrival #${playerInfo.arrivalIndex},  ID: ${playerNow} ${ playerId===playerNow ? '(you)' : '' }`;
+        str2 += `<br>`;
+        if (playerId===playerNow) str2 += `<b>`;
+        str2 += `Rank among active #${playerInfo.arrivalIndexActivePlayers}, Stable Index  #${playerInfo.arrivalIndexActivePlayersStable}, ID: ${playerNow} ${ playerId===playerNow ? '(you)' : '' }`;
+        if (playerId===playerNow) str2 += `</b>`;
     }
     str2 += `</p>`;
 
     let allPlayersEver = getAllPlayerIds();
     let numPlayersEver = getNumberAllPlayers();
-    str2 += `<p>History of players ever joined this session (${numPlayersEver} total):`;
+    str2 += `<p>History of players that ever joined this session or waiting room (${numPlayersEver} total):`;
     for (let i=0; i<numPlayersEver; i++) {
         let playerNow = allPlayersEver[i];
         let playerInfo = getPlayerInfo( playerNow );
@@ -289,7 +295,7 @@ function updateOngoingSession() {
 
 function endSession() {
     /*
-        Functionality to invoke when ending a session.
+        Function invoked by MPLIB when ending a session. Do *not* invoke this function yourself (use leaveSession for this purpose)
 
         This function does the following:
             - Displays the finish screen (hides all other divs)
@@ -305,7 +311,10 @@ function endSession() {
 
     let err = getSessionError();
 
-    if (err.errorCode == 1) {
+    if ( anyPlayerTerminatedAbnormally()) {
+        // Another player closed their window or were disconnected prematurely
+        messageFinish.innerHTML = `<p>Session ended abnormally because another player closed their window or was disconnected</p>`;
+    } else if (err.errorCode == 1) {
         // No sessions available
         messageFinish.innerHTML = `<p>Session ended abnormally because there are no available sessions to join</p>`;
     } else if (err.errorCode==2) {

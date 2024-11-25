@@ -26,7 +26,7 @@ import {
   hasControl,
   readState,
   getCurrentPlayerId, getCurrentPlayerIds, getAllPlayerIds, getPlayerInfo,getNumberCurrentPlayers,getNumberAllPlayers,
-  getCurrentPlayerArrivalIndex,getSessionId,anyPlayerTerminatedAbnormally,getSessionError,getWaitRoomInfo
+  getCurrentPlayerArrivalIndex, getCurrentPlayerArrivalIndexStable, getSessionId,anyPlayerTerminatedAbnormally,getSessionError,getWaitRoomInfo
 } from "/mplib/src/mplib.js";
 
 // -------------------------------------
@@ -799,7 +799,7 @@ let coins = {};
 let coinElements = {};
 let hasEnded = false;
 let roundTime = 150;  // 90 seconds per round
-let breakTime = 5;   // 5-second break between rounds
+let breakTime = 10;   // 5-second break between rounds
 let roundInterval = null; // To store the round timer interval
 let isBreakTime = false; 
 let timeLeft = roundTime;
@@ -1012,7 +1012,7 @@ async function resetCoinsAndDoors() {
   // Step 4: Reset doors
   console.log("Resetting doors for all subgrids...");
 
-  if(getCurrentPlayerArrivalIndex()===1){
+  if(getCurrentPlayerArrivalIndexStable()===1){
     await shuffleAndRedrawDoors(trappedIndex);
     placeDoorsForAllSubgrids(); 
   }
@@ -1023,7 +1023,7 @@ async function resetCoinsAndDoors() {
   document.querySelector('.player-info-panel').style.display = 'block';
   document.querySelector('.timer-container').style.display = 'block';
 
-  if (getCurrentPlayerArrivalIndex() !== 1) {
+  if (getCurrentPlayerArrivalIndexStable() !== 1) {
     fetchTrapSchedule();
   }
 
@@ -1548,11 +1548,11 @@ async function getDoorAtPosition(x, y, playerColor, playerId) {
             if (isMainEntry) {
 
                if(trapSchedule == null){
-                if (getCurrentPlayerArrivalIndex() !== 1) {
+                if (getCurrentPlayerArrivalIndexStable() !== 1) {
                   fetchTrapSchedule();
                 }
               }
-              const isPlayerTrapped = trapSchedule[currentRound]?.includes(getCurrentPlayerArrivalIndex() % 4);
+              const isPlayerTrapped = trapSchedule[currentRound]?.includes(getCurrentPlayerArrivalIndexStable() % 4);
               if(isPlayerTrapped && trapFlag === true){
                 let player = players[playerId];
                 let path = `players/${playerId}`;
@@ -1585,9 +1585,9 @@ async function getDoorAtPosition(x, y, playerColor, playerId) {
                 if(trapFlag === true){
                   trappedIndex = await readState("subgridAssignment/trapped");
                   trappedIndex = Number(trappedIndex) - 1;
-                  if(trappedIndex){
-                    trapFlag = 'used';
+                  if(trappedPlayer === null){
                     trappedPlayer = await readState('trappedPlayer');
+                    trapFlag = 'used';
                   }
                 }
                 if (Number(subgridIndex) ===  Number(trappedIndex) && trapFlag === 'used' && trappedPlayer != null) {
@@ -1815,7 +1815,7 @@ async function initGame() {
     // let color = await assignUniqueColor(); // Get a unique color for the player
     // if (!color) return; // Exit if no color is available
 
-    let arrivalIndex = getCurrentPlayerArrivalIndex() % 4;
+    let arrivalIndex = getCurrentPlayerArrivalIndexStable() % 4;
     let color;
 
     switch (arrivalIndex) {
@@ -1835,7 +1835,7 @@ async function initGame() {
             color = "gray"; // Fallback color
     }
 
-    if (getCurrentPlayerArrivalIndex() === 1) {
+    if (getCurrentPlayerArrivalIndexStable() === 1) {
       // Define possible trap schedules
       const trapSchedules = [
         { 1: [1], 2: [1], 3: [2], 4: [2] },  // First trap schedule
@@ -2169,7 +2169,7 @@ function endSessionDueToTimeout() {
   messageWaitingRoom.innerText = "We couldn't find a match for you with other participants at this time. Please close this window and try again later. You'll receive a partial compensation for your time. Thank you for your understanding.";
   // Redirect or log the player out if necessary
   // window.location.href = 'exit_page.html'; // Example of redirection
-  endSession();
+  leaveSession();
 }
 
 function joinWaitingRoom() {
@@ -2259,7 +2259,7 @@ async function startSession() {
   waitingRoomScreen.style.display = 'none';
   gameScreen.style.display = 'none';
   
-  let playerId = getCurrentPlayerId(); // the playerId for this client
+  let playerId = getCurrentPlayerId(); // the playerId for this clientgetCurrentPlayerStable()
   let dateString = timeStr(getPlayerInfo( playerId ).sessionStartedAt);
   let str = `Started game with session id ${getSessionId()} with ${getNumberCurrentPlayers()} players at ${dateString}.`;
   myconsolelog( str );
@@ -2331,18 +2331,19 @@ function endSession() {
 
     document.getElementById('submitQuestionnaire').addEventListener('click', () => {
       // Collect form data
-      const prolificID = document.getElementById('prolificID').value;
-      const strategy = document.getElementById('strategy').value;
-      const gameView = document.querySelector('input[name="gameView"]:checked').value;
-      const generalGameView = document.querySelector('input[name="generalGameView"]:checked').value;
-      const noticedStuckPlayer = document.querySelector('input[name="noticedStuckPlayer"]:checked').value;
-      const helpedStuckPlayer = document.querySelector('input[name="helpedStuckPlayer"]:checked').value;
-      const reasonHelped = document.getElementById('reasonHelped').value;
-      const reasonNotHelped = document.getElementById('reasonNotHelped').value;
-      const helpfulnessRating = document.querySelector('input[name="helpfulnessRating"]:checked').value;
-      const observedHelp = document.querySelector('input[name="observedHelp"]:checked').value;
-      const selfHelpfulness = document.querySelector('input[name="selfHelpfulness"]:checked').value;  
-      const suggestions = document.getElementById('suggestions').value;    
+      const prolificID = document.getElementById('prolificID').value.trim();
+      const strategy = document.getElementById('strategy').value.trim();
+      const gameView = document.querySelector('input[name="gameView"]:checked')?.value;
+      const generalGameView = document.querySelector('input[name="generalGameView"]:checked')?.value;
+      const noticedStuckPlayer = document.querySelector('input[name="noticedStuckPlayer"]:checked')?.value;
+      const helpedStuckPlayer = document.querySelector('input[name="helpedStuckPlayer"]:checked')?.value;
+      const reasonHelped = document.getElementById('reasonHelped').value.trim();
+      const reasonNotHelped = document.getElementById('reasonNotHelped').value.trim();
+      const helpfulnessRating = document.querySelector('input[name="helpfulnessRating"]:checked')?.value;
+      const observedHelp = document.querySelector('input[name="observedHelp"]:checked')?.value;
+      const selfHelpfulness = document.querySelector('input[name="selfHelpfulness"]:checked')?.value;
+      const suggestions = document.getElementById('suggestions').value.trim();
+    
     
       // Check if all required fields are filled
       if (
@@ -2389,7 +2390,7 @@ function endSession() {
       }, 3000); // 3-second delay before redirecting
     });
     
-  }else {
+  }else if (roundAt < totalRounds){
       messageFinish.innerHTML = `<p>The session ended unexpectedly. We apologize for the inconvenience. Please close the window.</p>`;
   }
 }
