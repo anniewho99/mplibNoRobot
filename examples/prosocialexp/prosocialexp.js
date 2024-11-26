@@ -828,18 +828,20 @@ let trappedIndex = 1;
 let trappedPlayer;
 
 function getPlayerStartingPosition() {
-  const arrivalIndex = getCurrentPlayerArrivalIndex();
+  const playerColor = introColor; // Get the player's color
 
-  // Define starting positions based on arrival index
-  const startingPositions = [
-    { x: mapData.minX, y: mapData.minY },               // Top-left for the first player
-    { x: mapData.maxX, y: mapData.minY },               // Top-right for the second player
-    { x: mapData.minX, y: mapData.maxY },               // Bottom-left for the third player
-    { x: mapData.maxX, y: mapData.maxY }                // Bottom-right for the fourth player
-  ];
+  // Define starting positions based on color
+  const startingPositions = {
+    blue: { x: mapData.minX, y: mapData.minY },          // Top-left for blue
+    red: { x: mapData.maxX, y: mapData.minY },           // Top-right for red
+    yellow: { x: mapData.minX, y: mapData.maxY },        // Bottom-left for yellow
+    purple: { x: mapData.maxX, y: mapData.maxY }         // Bottom-right for purple
+  };
 
-  return startingPositions[(arrivalIndex-1) % startingPositions.length];
+  // Return the starting position based on the player's color
+  return startingPositions[playerColor] || { x: mapData.minX, y: mapData.minY }; // Default to blue if color is not recognized
 }
+
 
 async function fetchTrapSchedule() {
 
