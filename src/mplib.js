@@ -573,23 +573,23 @@ window.addEventListener('beforeunload', function (event) {
     }
 });
 
-// When a client's browser comes into focus, it becomes eligible for object control
-window.addEventListener('focus', function () {
-    focusStatus = 'focus';
-    if ((si.sessionInitiated) && (si.status !== 'endSession')) {
-        myconsolelog('Player is in focus');
-        sessionUpdate('focus', si.playerId);
-    }
-});
+// // When a client's browser comes into focus, it becomes eligible for object control
+// window.addEventListener('focus', function () {
+//     focusStatus = 'focus';
+//     if ((si.sessionInitiated) && (si.status !== 'endSession')) {
+//         myconsolelog('Player is in focus');
+//         sessionUpdate('focus', si.playerId);
+//     }
+// });
 
-// When a client's browser is out of focus, it becomes ineligible for object control
-window.addEventListener('blur', function () {
-    focusStatus = 'blur';
-    if ((si.sessionInitiated) && (si.status !== 'endSession')) {
-        myconsolelog('Player has lost focus');
-        sessionUpdate('blur', si.playerId);
-    }
-});
+// // When a client's browser is out of focus, it becomes ineligible for object control
+// window.addEventListener('blur', function () {
+//     focusStatus = 'blur';
+//     if ((si.sessionInitiated) && (si.status !== 'endSession')) {
+//         myconsolelog('Player has lost focus');
+//         sessionUpdate('blur', si.playerId);
+//     }
+// });
 
 // Experimental feature: 
 // reading the state at a given path
