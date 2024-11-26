@@ -696,8 +696,14 @@ export async function updateStateTransaction(path, action, actionArgs) {
                     args: actionArgs
                 };
 
-                let newDataRef = push(recordEventsRef);
-                set(newDataRef, returnResult);
+                try{
+                    let newDataRef = push(recordEventsRef);
+                    set(newDataRef, returnResult);
+                    console.log("Data set successfully");
+
+                }catch(error){
+                    console.error("An error occurerred:", error);
+                }
             }
         }
 

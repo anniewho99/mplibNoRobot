@@ -34,7 +34,8 @@
 
 .game-container {
   /*position: relative;*/
-  margin-top: 10;
+  margin-top: 20px; /* Add some space at the top */
+  margin-left: 20px;
   width: 304px; /* Doubled width to fit four times the original grid */
   height: 304px; /* Doubled height to fit four times the original grid */
   background: url('./images/map_cropped.png') repeat;

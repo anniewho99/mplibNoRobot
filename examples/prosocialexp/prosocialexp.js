@@ -44,7 +44,7 @@ let gameContainer = document.querySelector(".game-container");
 //       Session configuration
 // -------------------------------------
 // studyId is the name of the root node we create in the realtime database
-const studyId = 'gridworld'; 
+const studyId = 'prosocial'; 
 
 // Configuration setting for the session
 let sessionConfig = {
@@ -54,7 +54,7 @@ let sessionConfig = {
     allowReplacements: false, // Allow replacing any players who leave an ongoing session?
     exitDelayWaitingRoom: 0, // Number of countdown seconds before leaving waiting room (if zero, player leaves waiting room immediately)
     maxHoursSession: 0, // Maximum hours where additional players are still allowed to be added to session (if zero, there is no time limit)
-    recordData: true // Record all data?  
+    recordData: true, // Record all data?  
 };
 const verbosity = 2;
 
@@ -1295,37 +1295,45 @@ function isOccupied(x,y) {
 }
 
 async function placeTokensForPlayer(playerId) {
-  let player = players[playerId];
-  if (!player) return;
+  let retries = 5;
+  let delay = 100; // Delay between retries in milliseconds
 
-  // Log player data for debugging
-  console.log(`Placing tokens for player ${playerId}. Player data:`, player);
+  while (retries > 0) {
+    try {
+      // Pre-fetch current subgrid assignments, ensure fallback to {}
+      let subgridAssignments = await readState('subgridAssignment') || {};
+      console.log('Current subgridAssignments:', subgridAssignments);
 
-  // Attempt to assign a subgrid using updateStateTransaction
-  const transactionSuccess = await updateStateTransaction('subgridAssignment', 'assignSubgrid', {
-      playerId: playerId,
-      subgrid: null  // Pass null, as the subgrid will be chosen inside evaluateUpdate
-  });
+      // Find the first available subgrid
+      let chosenSubgrid = getRandomAvailableSubgrid(subgridAssignments);
+      if (!chosenSubgrid) {
+        console.error("No available subgrid for assignment.");
+        return;
+      }
 
-  if (!transactionSuccess) {
-    console.error("Failed to assign a unique subgrid to the player.");
-    return;
+      // Proceed with the transaction
+      const transactionSuccess = await updateStateTransaction('subgridAssignment', 'assignSubgrid', {
+        playerId: playerId,
+        subgrid: chosenSubgrid, // Pass the chosen subgrid directly
+      });
+
+      if (transactionSuccess) {
+        console.log(`Player ${playerId} successfully assigned to subgrid ${chosenSubgrid}`);
+        await placeTokensInSubgrid(playerId, chosenSubgrid);
+        return; // Exit loop on success
+      } else {
+        console.warn(`Transaction failed for player ${playerId}, retrying...`);
+      }
+    } catch (error) {
+      console.error(`Error during transaction for player ${playerId}:`, error);
+    }
+
+    retries--;
+    await new Promise((resolve) => setTimeout(resolve, delay));
+    delay *= 2; // Exponential backoff
   }
 
-  // Fetch the subgridAssignment data from Firebase to determine the assigned subgrid
-  let subgridAssignments = await readState('subgridAssignment');
-  console.log('Retrieved subgridAssignments:', subgridAssignments); 
-  let assignedSubgrid = subgridAssignments[playerId];
-
-  if (!assignedSubgrid) {
-    console.error(`No subgrid assigned for player ${playerId}`);
-    return;
-  }
-
-  console.log(`Player ${playerId} successfully assigned to subgrid ${assignedSubgrid}`);
-
-  // Now place tokens for the player in the assigned subgrid
-  await placeTokensInSubgrid(playerId, assignedSubgrid);
+  console.error(`Failed to assign subgrid to player ${playerId} after retries.`);
 }
 
 async function placeTokensInSubgrid(playerId, subgridId) {
@@ -2103,14 +2111,12 @@ function evaluateUpdate(path, state, action, actionArgs) {
   let isAllowed = false;
   let newState = null;
 
-  // Check the action type to ensure it matches what we want to handle
   if (action === "assignSubgrid") {
     const { playerId, subgrid } = actionArgs;
 
     // Initialize subgridAssignments if it doesn't exist yet
-    let subgridAssignments = state || {};
+    let subgridAssignments = state || {}; // Ensure state is an object
 
-    // If the subgrid is null, find the first available subgrid
     let chosenSubgrid = subgrid;
     if (subgrid === null) {
       console.log(`No specific subgrid provided. Choosing the first available subgrid.`);
@@ -2125,38 +2131,32 @@ function evaluateUpdate(path, state, action, actionArgs) {
 
       // Update the state with the new assignments
       newState = subgridAssignments;
-      isAllowed = true;  // The transaction is successful
+      isAllowed = true;
       console.log(`Assigned subgrid ${chosenSubgrid} to player ${playerId}`);
     } else {
-      console.log(`Subgrid ${chosenSubgrid} is already taken.`);
+      console.warn(`Conflict: Subgrid ${chosenSubgrid} is already assigned.`);
     }
   }
 
-  // Construct and return the result of the evaluation
-  let evaluationResult = { isAllowed, newState };
-  return evaluationResult;
+  return { isAllowed, newState };
 }
 
-
-// Helper function to find the first available subgrid
 function getRandomAvailableSubgrid(subgridAssignments) {
-  // Collect all available subgrids
-  let availableSubgrids = [];
-  
-  for (let i = 0; i < subgridPositions.length; i++) {
-    // Use 1-based indexing, so add 1 to the index check
-    if (!Object.values(subgridAssignments).includes(i + 1)) {
-      availableSubgrids.push(i + 1);  // Collect the available subgrid
-    }
-  }
+  // Get total number of subgrids based on subgridPositions length
+  const totalSubgrids = subgridPositions.length;
 
-  // Randomly select one from the available subgrids
+  // Determine available subgrids
+  const availableSubgrids = Array.from({ length: totalSubgrids }, (_, i) => i + 1)
+    .filter(subgrid => !Object.values(subgridAssignments).includes(subgrid));
+
+  // Randomly select one of the available subgrids
   if (availableSubgrids.length > 0) {
-    let randomIndex = Math.floor(Math.random() * availableSubgrids.length);
+    const randomIndex = Math.floor(Math.random() * availableSubgrids.length);
     return availableSubgrids[randomIndex];
   }
 
-  return null;  // Return null if no subgrid is available
+  // Return null if no subgrids are available
+  return null;
 }
 
 
@@ -2350,9 +2350,6 @@ function endSession() {
   } else if (err.errorCode==3) {
       // This client is using an incompatible browser
       messageFinish.innerHTML = `<p>Session ended abnormally because you are using the Edge browser which is incompatible with this experiment. Please use Chrome or Firefox</p>`;
-  } if (err.errorCode == 4) {
-    // Another player closed their window or were disconnected prematurely
-    messageFinish.innerHTML = `<p>Session ended abnormally because another player closed their window or was disconnected</p>`;
   }else if(roundAt == totalRounds){
     document.getElementById('questionnaireForm').style.display = 'block';
     document.getElementById('messageFinish').innerText = "Thank you for playing! Please complete the questionnaire below. Questions marked with an asterisk (*) are required.";
