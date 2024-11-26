@@ -969,6 +969,8 @@ function endRound() {
   if(currentRound >= 1){
     breakTime = 10;
   }
+
+  updateStateDirect("subgridAssignment", null, 'remove Grid for new Round');
   
   // Start a 5-second break
   setTimeout(() => {
