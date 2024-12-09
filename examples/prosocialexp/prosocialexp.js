@@ -114,7 +114,8 @@ const instructions = [
   "You’ll use the arrow keys to move your character around the grid. Let's start by placing you as the orange character on the top left corner!",
   "You are now the orange character in the top left corner of the grid, which has four rooms separated by walls and doors",
   "Each room has doors in different colors, and you can only pass through doors that match your color. Try passing through the orange door to enter a room! Once you enter a room, the door colors will shuffle.",
-  "Next, let’s collect some tokens. You can only collect tokens that match your color. Ready to try collecting tokens? Go ahead and collect the three orange coins in the top left room.",
+  "Now, let's practice entering another room. In the lower right room, the green door has disappeared. In situations like this, if you enter the room through the door matching your color, the doors will shuffle, and the green door will reappear.",
+  "Next, let’s collect some tokens. You can only collect tokens that match your color. Ready to try collecting tokens? Go ahead and collect the three orange coins in the lower left room.",
   "There are other players in the game, ranging from one to three additional participants. In this example, there is one other player: the green player, located in the top right corner. This player’s objective is to collect the green coins in the top right room.",
   "Here, we’re demonstrating what another player might do. Keep in mind that when you start the game, you’ll be playing with real human participants. "
 ]
@@ -149,14 +150,18 @@ function handleInstructionStep(step) {
       document.getElementById("nextBtn").style.visibility = "hidden";
       break;
     case 3:
-      placePracticeCoins();  
+      setLowerRightGreenDoorGray(); 
       document.getElementById("nextBtn").style.visibility = "hidden";
       break;
     case 4:
+      placePracticeCoins();  
+      document.getElementById("nextBtn").style.visibility = "hidden";
+      break;
+    case 5:
       placeYellowPlayer();
       placeYellowTokens();
       break;
-    case 5:
+    case 6:
       moveYellowPlayer(yellowDirection);
       document.getElementById("nextBtn").style.visibility = "hidden";
   }
@@ -211,7 +216,7 @@ function EnablePlacePracticePlayer() {
       if (collectedTokens >= totalPracticeTokens) {
         // End practice mode when all tokens are collected
         document.removeEventListener("keydown", handlePracticeMovement);
-        instructionStep = 4;
+        instructionStep = 5;
         document.getElementById("nextBtn").style.visibility = "visible";
       }
     }
@@ -282,6 +287,20 @@ function renderPracticeGrid() {
       outline.style.border = "2.5px solid darkgrey"; // Outline color and thickness
       container.appendChild(outline);
   });
+}
+
+function setLowerRightGreenDoorGray() {
+  // Lower right grid's green door (subgrid 3)
+  const lowerRightSubgridIndex = 3;
+
+  // Find the green door for the lower right subgrid
+  const greenDoor = document.querySelector(`.practice-door[data-subgrid-index="${lowerRightSubgridIndex}"][data-color="#61c96f"]`);
+
+  if (greenDoor) {
+    greenDoor.style.backgroundColor = "gray";
+    greenDoor.setAttribute("data-color", "gray");
+    console.log("Lower right grid's green door set to gray.");
+  }
 }
 
 
@@ -486,6 +505,12 @@ function movePracticePlayer(event, player) {
   if (isEnteringFromDoor && subgridIndex !== -1 && instructionStep === 2) {
     console.log(`Entering from door at: (${newX}, ${newY})`);
     instructionStep = 3;
+    document.getElementById("nextBtn").style.visibility = "visible";
+  }
+
+  if (isEnteringFromDoor && subgridIndex === 3 && instructionStep === 3) {
+    console.log(`Entering from door at subgrid 3`);
+    instructionStep = 4;
     document.getElementById("nextBtn").style.visibility = "visible";
   }
 
