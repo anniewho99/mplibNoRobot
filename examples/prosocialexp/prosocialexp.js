@@ -48,8 +48,8 @@ const studyId = 'prosocial';
 
 // Configuration setting for the session
 let sessionConfig = {
-    minPlayersNeeded: 2, // Minimum number of players needed; if set to 1, there is no waiting room (unless a countdown has been setup)
-    maxPlayersNeeded: 2, // Maximum number of players allowed in a session
+    minPlayersNeeded: 3, // Minimum number of players needed; if set to 1, there is no waiting room (unless a countdown has been setup)
+    maxPlayersNeeded: 3, // Maximum number of players allowed in a session
     maxParallelSessions: 0, // Maximum number of sessions in parallel (if zero, there are no limit)
     allowReplacements: false, // Allow replacing any players who leave an ongoing session?
     exitDelayWaitingRoom: 0, // Number of countdown seconds before leaving waiting room (if zero, player leaves waiting room immediately)
@@ -76,7 +76,7 @@ let funList = {
 };
 
 // List the node names where we place listeners for any changes to the children of these nodes; set to '' if listening to changes for children of the root
-let listenerPaths = ['coins', 'players', 'doors', 'subgridAssignment', 'condition', 'trappedPlayer'];
+let listenerPaths = ['coins', 'players', 'doors', 'subgridAssignment', 'condition', 'trappedPlayer', 'colorAssignment', 'playerSequenceAssignment'];
 
 // Set the session configuration for MPLIB
 initializeMPLIB( sessionConfig , studyId , funList, listenerPaths, verbosity );
@@ -702,8 +702,12 @@ let mapData = {
 //   4: [2],
 // }
 
-let trapSchedule;
+let trapSchedule = {};
 
+let sequenceObject = {};
+let colorObject = {};
+
+let roundCounter = 1;
 
 let subgridPositions = [
   { xStart: 3, xEnd: 5, yStart: 3, yEnd: 5 },
@@ -770,7 +774,7 @@ subgridPositions.forEach(grid => {  // Use subgridPositions instead of GRIDS
 forbidden_moves = Array.from(new Set(forbidden_moves));
 
 // Options for Player Colors... these are in the same order as our sprite sheet
-const playerColors = ["blue", "red", "yellow", "purple"];
+//const playerColors = ["blue", "red", "yellow", "purple"];
 
 // const colorMap = {
 //   "#00ccff": "blue",
@@ -854,6 +858,9 @@ let trappedPlayer;
 
 let arrivalIndex;
 
+let playerSequence = 'test';
+
+
 function getPlayerStartingPosition() {
   const playerColor = introColor; // Get the player's color
 
@@ -870,18 +877,25 @@ function getPlayerStartingPosition() {
 }
 
 
-async function fetchTrapSchedule() {
+// async function fetchTrapSchedule(arrivalIndex) {
 
-  // // Read the trap schedule from Firebase
-  // readStateDirect(path, (trap) => {
-  //   if (trap) {
-  //     console.log("Trap schedule fetched from Firebase:", trapSchedule);
-  //     trapSchedule = trap;
-  //   }
-  // });
-  trapSchedule= await readState(`condition`);
-  console.log("Trap schedule fetched from Firebase:", trapSchedule);
-}
+//   // // Read the trap schedule from Firebase
+//   // readStateDirect(path, (trap) => {
+//   //   if (trap) {
+//   //     console.log("Trap schedule fetched from Firebase:", trapSchedule);
+//   //     trapSchedule = trap;
+//   //   }
+//   // });
+//   trapSchedule= await readState(`condition`);
+//   console.log("Trap schedule fetched from Firebase:", trapSchedule);
+
+//   let colorSequence = await readState(`colorAssignment`);
+//   introColor = colorSequence[arrivalIndex - 1];
+
+//   let playerSequences = await readState(`playerSequenceAssignment`);
+//   playerSequence = playerSequences[arrivalIndex - 1];
+
+// }
 
 // Function to start the round timer
 function startRoundTimer() {
@@ -1066,9 +1080,9 @@ async function resetCoinsAndDoors() {
   document.querySelector('.player-info-panel').style.display = 'block';
   document.querySelector('.timer-container').style.display = 'block';
 
-  if (arrivalIndex !== 1) {
-    fetchTrapSchedule();
-  }
+  // if (arrivalIndex !== 1) {
+  //   fetchTrapSchedule();
+  // }
 
 }
 
@@ -1598,12 +1612,12 @@ async function getDoorAtPosition(x, y, playerColor, playerId) {
             // If it's a main entry, shuffle the doors
             if (isMainEntry) {
 
-               if(trapSchedule == null){
-                if (arrivalIndex !== 1) {
-                  fetchTrapSchedule();
-                }
-              }
-              const isPlayerTrapped = trapSchedule[currentRound]?.includes(arrivalIndex);
+              //  if(trapSchedule == null){
+              //   if (arrivalIndex !== 1) {
+              //     fetchTrapSchedule();
+              //   }
+              // }
+              const isPlayerTrapped = trapSchedule[currentRound]?.includes(playerSequence);
               if(isPlayerTrapped && trapFlag === true){
                 let player = players[playerId];
                 let path = `players/${playerId}`;
@@ -1874,24 +1888,24 @@ async function initGame() {
     // if (!color) return; // Exit if no color is available
 
     arrivalIndex = getCurrentPlayerArrivalIndex() % 4;
-    let color;
+    let color= 'test';
 
-    switch (arrivalIndex) {
-        case 1:
-            color = "blue";
-            break;
-        case 2:
-            color = "red";
-            break;
-        case 3:
-            color = "yellow";
-            break;
-        case 0:
-            color = "purple";
-            break;
-        default:
-            color = "gray"; // Fallback color
-    }
+    // switch (arrivalIndex) {
+    //     case 1:
+    //         color = "blue";
+    //         break;
+    //     case 2:
+    //         color = "red";
+    //         break;
+    //     case 3:
+    //         color = "yellow";
+    //         break;
+    //     case 0:
+    //         color = "purple";
+    //         break;
+    //     default:
+    //         color = "gray"; // Fallback color
+    // }
 
     if (arrivalIndex === 1) {
       // Define possible trap schedules
@@ -1903,13 +1917,44 @@ async function initGame() {
   
       // Randomly select one of the trap schedules
       const randomIndex = Math.floor(Math.random() * trapSchedules.length);
-      trapSchedule = trapSchedules[randomIndex];
+      let initTrapSchedule = trapSchedules[randomIndex];
+
+      const numPlayers = sessionConfig.minPlayersNeeded;
+
+      const availableColors = ["blue", "red", "yellow", "purple"];
+      const shuffledColors = availableColors.sort(() => Math.random() - 0.5).slice(0, numPlayers);
+      const playerIDs = Array.from({ length: numPlayers }, (_, i) => i + 1);
+      const shuffledPlayerIDs = playerIDs.sort(() => Math.random() - 0.5);
+
+      color = shuffledColors[arrivalIndex - 1];
+      playerSequence = shuffledPlayerIDs[arrivalIndex - 1];
+
+      introColor = color;
+
+      const playerSequenceObject = {};
+      shuffledPlayerIDs.forEach((id, index) => {
+        playerSequenceObject[index] = id;
+      });
+
+      const colorSequenceObject = {};
+      shuffledColors.forEach((color, index) => {
+        colorSequenceObject[index] = color;
+      });
+
   
       // Update the trap schedule to Firebase
       let path = `condition`;
-      updateStateDirect(path, trapSchedule ,'storeCondition');
-  
-      console.log("Trap schedule set and updated to Firebase:", trapSchedule);
+      updateStateDirect(path, initTrapSchedule,'storeCondition');
+      console.log("Trap schedule set and updated to Firebase:",initTrapSchedule);
+
+      path = `playerSequenceAssignment`;
+      updateStateDirect(path, playerSequenceObject,'storePlayerSequence');
+      console.log("Player sequence sent to Firebase:", playerSequenceObject);
+
+      path = `colorAssignment`;
+      updateStateDirect(path, colorSequenceObject,'storeColorSequence');
+      console.log("Color sequence updated to Firebase:", colorSequenceObject);
+
     }
 
  
@@ -1919,7 +1964,6 @@ async function initGame() {
     
     const {x, y} = { x: 1, y: 1 }; 
 
-    introColor = color;
     introName = name;
     
     // Broadcast this new player position to the database
@@ -1936,6 +1980,7 @@ async function initGame() {
           coins: 0,
           isTrapped: false,
           roundNumber: currentRound,
+          sequence: playerSequence,
         };
     updateStateDirect(path, newState , 'initPlayer');
 
@@ -1947,6 +1992,21 @@ async function initGame() {
     // // Place first coin
     // placeTokensForPlayer(playerId);
     // placeDoorsForAllSubgrids();
+}
+
+let trapScheduleReady = false;
+let playerColorReady = false;
+let playerSequenceReady = false;
+
+let gameStart = true;
+
+// Function to check if all data is ready
+function checkAllDataReady() {
+  if (trapScheduleReady && playerColorReady && playerSequenceReady && gameStart) {
+    console.log("All data received. Proceeding to initRounds...");
+    gameStart = false;
+    initRounds(); // Call your initRounds function here
+  }
 }
 
 // --------------------------------------------------------------------------------------
@@ -2109,16 +2169,83 @@ function receiveStateChange(pathNow,nodeName, newState, typeChange ) {
 
   if (pathNow === 'condition') {
     console.log('Updated trap schedule:', newState);
+    const playerID = newState[0]; // Assume `newState` is an array with a single trapped player ID
+
+    // Assign the current roundCounter as the round key
+    trapSchedule[roundCounter] = [playerID];
   
-    // Directly handle updates to the trapSchedule
-    for (const round in newState) {
-      if (newState.hasOwnProperty(round)) {
-        const trappedPlayers = newState[round];
-        console.log(`Round ${round}: Players trapped - ${trappedPlayers}`);
-      }
+    console.log(`Round ${roundCounter}: Player ${playerID} trapped`);
+  
+    // Increment the roundCounter for the next update
+    roundCounter++;
+  
+    console.log('Updated trap schedule:', trapSchedule);
+
+    if(Object.entries(trapSchedule).length == 4){
+      trapScheduleReady = true; // Mark trapSchedule as ready
+      checkAllDataReady();
     }
 
-    //trapSchedule = newState;
+  }
+
+  if (pathNow === 'colorAssignment') {
+    console.log('New color assignment:', newState);
+    const newKey = Object.keys(colorObject).length + 1; // Determine the next key
+    colorObject[newKey] = newState;
+    console.log('Updated colorObject:', colorObject);
+
+    if(Object.entries(colorObject).length= sessionConfig.minPlayersNeeded && arrivalIndex != 1){
+      introColor = colorObject[arrivalIndex];
+      let path = `players/${playerId}`;
+
+      // Update only the color property
+      let updatedColorState = {
+        color: introColor
+      };
+  
+      // Call the update function with the updated color
+      updateStateDirect(path, updatedColorState, 'updatePlayerColor');
+
+      playerColorReady = true; // Mark playerColor as ready
+      checkAllDataReady(); 
+      
+    }
+
+    if(Object.entries(colorObject).length= sessionConfig.minPlayersNeeded && arrivalIndex == 1){
+      playerColorReady = true; 
+      checkAllDataReady(); 
+    }
+  }
+
+  if (pathNow === 'playerSequenceAssignment') {
+    console.log('New sequence assignment:', newState);
+    // playerSequenceArray.push(newState);
+    // console.log('Updated sequence assignment:', playerSequenceArray);
+
+    const newKey = Object.keys(sequenceObject).length + 1; // Determine the next key
+    sequenceObject[newKey] = newState;
+    console.log('Updated sequenceObject:', sequenceObject);
+
+    if(Object.entries(sequenceObject).length = sessionConfig.minPlayersNeeded && arrivalIndex != 1){
+      playerSequence = sequenceObject[arrivalIndex];
+      let path = `players/${playerId}`;
+
+      // Update only the color property
+      let updatedSequenceState = {
+        sequence: playerSequence
+      };
+  
+      // Call the update function with the updated color
+      updateStateDirect(path, updatedSequenceState, 'updatePlayerColor');
+      playerSequenceReady = true; // Mark playerSequence as ready
+      checkAllDataReady();
+      
+    }
+
+    if(Object.entries(sequenceObject).length= sessionConfig.minPlayersNeeded && arrivalIndex == 1){
+      playerSequenceReady = true; 
+      checkAllDataReady(); 
+    }
   }
 
   if(pathNow === "trappedPlayer" && (typeChange == 'onChildAdded' ||typeChange == 'onChildChanged')){
@@ -2323,7 +2450,7 @@ async function startSession() {
   //let str2 = `You are: Player${getCurrentPlayerArrivalIndex()}`;
   //messageGame.innerHTML = str2;
   await initGame();
-  initRounds();
+  //initRounds();
 }
 
 function updateOngoingSession() {
