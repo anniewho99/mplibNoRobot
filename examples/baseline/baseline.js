@@ -1908,6 +1908,7 @@ async function initGame() {
     // }
 
     if (arrivalIndex === 1) {
+      introName = name;
       // Define possible trap schedules
       const trapSchedules = [
         { 1: [1], 2: [1], 3: [2], 4: [2] },  // First trap schedule
