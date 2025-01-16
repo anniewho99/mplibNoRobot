@@ -48,8 +48,8 @@ const studyId = 'prosocial';
 
 // Configuration setting for the session
 let sessionConfig = {
-    minPlayersNeeded: 3, // Minimum number of players needed; if set to 1, there is no waiting room (unless a countdown has been setup)
-    maxPlayersNeeded: 3, // Maximum number of players allowed in a session
+    minPlayersNeeded: 2, // Minimum number of players needed; if set to 1, there is no waiting room (unless a countdown has been setup)
+    maxPlayersNeeded: 2, // Maximum number of players allowed in a session
     maxParallelSessions: 0, // Maximum number of sessions in parallel (if zero, there are no limit)
     allowReplacements: false, // Allow replacing any players who leave an ongoing session?
     exitDelayWaitingRoom: 0, // Number of countdown seconds before leaving waiting room (if zero, player leaves waiting room immediately)
