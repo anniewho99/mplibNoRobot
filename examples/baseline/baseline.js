@@ -44,7 +44,7 @@ let gameContainer = document.querySelector(".game-container");
 //       Session configuration
 // -------------------------------------
 // studyId is the name of the root node we create in the realtime database
-const studyId = 'prosocial'; 
+const studyId = 'baseline'; 
 
 // Configuration setting for the session
 let sessionConfig = {
