@@ -2565,7 +2565,7 @@ function endSession() {
       document.getElementById('questionnaireForm').style.display = 'none';
 
       setTimeout(() => {
-        window.location.href = "https://app.prolific.com/submissions/complete?cc=C8MVAKZS";
+        window.location.href = "https://app.prolific.com/submissions/complete?cc=C1P6A655";
       }, 3000); // 3-second delay before redirecting
     });
     
