@@ -1332,6 +1332,7 @@ function isOccupied(x,y) {
 }
 
 async function placeTokensForPlayer(playerId) {
+  await new Promise(resolve => setTimeout(resolve, 5000));
   let retries = 5;
   let delay = 100; // Delay between retries in milliseconds
 
