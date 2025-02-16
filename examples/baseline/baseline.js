@@ -875,7 +875,7 @@ let introColor;
 let introName;
 
 let currentRound = 0;
-let trapTime = 5; 
+let trapTime = 50; 
 let trapFlag = false;
 
 let totalRounds = 4;
