@@ -875,7 +875,7 @@ let introColor;
 let introName;
 
 let currentRound = 0;
-let trapTime = 50; 
+let trapTime = 5; 
 let trapFlag = false;
 
 let totalRounds = 4;
@@ -1931,26 +1931,36 @@ function displayThankYouMessage(subgridIndex) {
   const subgrid = subgridPositions[subgridIndex]; // Get the trapped player's subgrid
   const gameContainer = document.querySelector(".game-container"); // The main grid container
 
-  // Create the thank-you message element
-  let messageDiv = document.createElement("div");
-  messageDiv.classList.add("thank-you-message");
-  messageDiv.textContent = "Thank you!";
+  // Create the heart image element
+  let heartImg = document.createElement("img");
+  heartImg.classList.add("thank-you-heart");
+  heartImg.src = "./images/heart.png"; // Ensure the correct path to your heart image
+  heartImg.alt = "Thank you!";
 
-  // Position the message at the center of the trapped subgrid
-  messageDiv.style.left = `${(subgrid.xStart + subgrid.xEnd) / 2 * 16 - 25}px`; 
-  messageDiv.style.top = `${(subgrid.yStart + subgrid.yEnd) / 2 * 16 - 10}px`; 
+  const oldX = players[trappedPlayer].x;
+  const oldY = players[trappedPlayer].y;
 
-  // Append the message to the game container
-  gameContainer.appendChild(messageDiv);
+  // Position the heart at the center of the trapped subgrid
+  heartImg.style.position = "absolute";
+  heartImg.style.left = `${oldX * 16 - 16}px`; 
+  heartImg.style.top = `${ oldY * 16 - 26}px`; 
+  heartImg.style.width = "16px"; // Adjust size as needed
+  heartImg.style.height = "16px";
+  heartImg.style.opacity = "1";
+  heartImg.style.transition = "opacity 1s ease-in-out";
 
-  // Remove the message after 3 seconds
+  // Append the heart image to the game container
+  gameContainer.appendChild(heartImg);
+
+  // Remove the heart after 3 seconds with fade-out effect
   setTimeout(() => {
-    messageDiv.style.opacity = '0';
+    heartImg.style.opacity = '0';
     setTimeout(() => {
-      messageDiv.remove();
+      heartImg.remove();
     }, 1000); // Wait for fade-out transition
   }, 3000);
 }
+
 
 
 
