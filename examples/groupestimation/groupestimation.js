@@ -43,7 +43,7 @@ import {
     getSessionId,
     getSessionError,
     getWaitRoomInfo
-  } from "/mplib/src/mplib.js";
+  } from "/mplibNoRobot/src/mplib.js";
   
   
   /*
@@ -1092,7 +1092,13 @@ import {
   
   let completedLevel = false;
   
-  let assigendCondition = 'abcd';
+  const assigendCondition = 'abcd';
+
+
+  console.log('assigned condition is', assigendCondition);
+
+  console.trace('TRACE assigendCondition');
+
   
   function getForcedConditionFromURL() {
     const cond = new URLSearchParams(window.location.search).get('cond');
@@ -1100,19 +1106,18 @@ import {
     return allowed.has(cond) ? cond : null;
   }
   
-  function applyCondition(cond) {
-    // assigendCondition = cond;
-    console.log('assigned condition is', assigendCondition);
-    if (cond === 'abcd') levelPlacements = abcd;
-    else if (cond === 'cdab') levelPlacements = cdab;
-    else if (cond === 'bcda') levelPlacements = bcda;
-    else if (cond === 'dabc') levelPlacements = dabc;
-    else levelPlacements = null;
-  }
+//   function applyCondition(cond) {
+//     // assigendCondition = cond;
+//     console.log('assigned condition is', assigendCondition);
+//     if (cond === 'abcd') levelPlacements = abcd;
+//     else if (cond === 'cdab') levelPlacements = cdab;
+//     else if (cond === 'bcda') levelPlacements = bcda;
+//     else if (cond === 'dabc') levelPlacements = dabc;
+//     else levelPlacements = null;
+//   }
   
   //const forced = getForcedConditionFromURL();
   
-  let levelPlacements;
   //abcd levelPlacements
   const abcd = {
     0: {
@@ -1191,6 +1196,8 @@ import {
         }
     },
   };
+
+  let levelPlacements = abcd;
   //cdab
   const cdab = {
     0: {
@@ -1428,8 +1435,6 @@ import {
   },
   };
   
-  
-  applyCondition(assigendCondition);
   //cdab
   // const levelPlacements = {
   //   0: {

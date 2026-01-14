@@ -49,7 +49,7 @@ let callback_evaluateUpdate;
 let callback_removePlayerState; 
 
 // Initialize App
-const firebaseApp = initializeApp(firebasempConfig);
+const firebaseApp = initializeApp(firebaseConfig);
 const auth = getAuth(firebaseApp);
 const db = getDatabase(firebaseApp);
 
