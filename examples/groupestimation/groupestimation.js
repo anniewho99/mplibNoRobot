@@ -67,17 +67,21 @@ import {
   let playerName = generateRandomName();
   const instructionSteps = [
     {
-        text: `Welcome! In this game, your goal is to work with two other players to move all the blocks into the slots as quickly as possible across four levels.\n\nBelow is a video showing what the game looks like.\nWe'll explain everything step by step!`,
-  
+        text: `Welcome! In this game, your goal is to work with two other players to move all the blocks into the slots as quickly as possible across four levels.
+      
+      Below is a video showing what the game looks like.
+      We'll explain everything step by step.
+      
+      Note: To ensure data quality, participants should only take part once. If this game looks familiar or you believe you have completed a similar version before, please exit the study. Unfortunately, repeated participation cannot be compensated.`,
         demo: `
-        <div style="text-align: center;">
+          <div style="text-align: center;">
             <video width="480" autoplay loop muted playsinline style="border: 2px solid #ccc; border-radius: 8px;">
-                <source src="./images/demoNoComm.mp4" type="video/mp4">
-                Your browser does not support the video tag.
+              <source src="./images/demoNoComm.mp4" type="video/mp4">
+              Your browser does not support the video tag.
             </video>
-        </div>
-  `
-    },
+          </div>
+        `
+      },
     {
         text: `
         This is your avatar, and your player name is ${playerName}.
@@ -504,6 +508,19 @@ import {
       countdown--;
   
       if (countdown > 0) {
+        if(currentStep == 7){
+            const blockEl = document.querySelector('.block:not([data-obstacle="true"])');
+            addPracticeArrowToBlock(blockEl, "left", 2);
+        }
+        if(currentStep == 8){
+            const blockEl = document.querySelector('.block:not([data-obstacle="true"])');
+            addPracticeArrowToBlock(blockEl, "left", 2);
+            if(countdown > 3){
+                addPracticeArrowToBlock(blockEl, "down", 3);
+            }else{
+                addPracticeArrowToBlock(blockEl, "left", 3);
+            }
+        }
         timerEl.innerText = `Choose a direction to move an object – ${countdown}s remaining...`;
         return;
       }
@@ -2130,7 +2147,10 @@ import {
   
   
   // Set up correct instructions
-  instructionsText.innerHTML = `Welcome! In this game, your goal is to work with two other players to move all the blocks into the slots as quickly as possible across four levels.\n\nBelow is a video showing what the game looks like.\nWe'll explain everything step by step!`;
+  instructionsText.innerHTML = `Welcome! In this game, your goal is to work with two other players to move all the blocks into the slots as quickly as possible across four levels.\n
+      Below is a video showing what the game looks like.\n
+      We'll explain everything step by step.\n
+      \n Note: To ensure data quality, participants should only take part once. If this game looks familiar or you believe you have completed a similar version before, please exit the study. Unfortunately, repeated participation cannot be compensated.`;
   
   
   //  Game Event Listeners
