@@ -994,7 +994,7 @@ import {
     return isNaN(num) ? 5 : Math.max(2, Math.min(num, 5)); // default to 5, clamp between 2–5
   }
   
-  let GameName = "noCommCDAB";
+  let GameName = "noCommCDABTwo";
   let NumPlayers = 3;
   let MinPlayers = NumPlayers;
   let MaxPlayers = NumPlayers;
@@ -3002,7 +3002,6 @@ import {
     document.body.appendChild(clone);
   
   }
-  
   
   
   function animateSpriteOnce(arrowDiv, frameCount = 6, frameWidth = 40, frameHeight = 40, fps = 12) {
